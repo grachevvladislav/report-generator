@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "report-generator"
+version = "0.1.0"
+description = ""
+authors = ["vlad <vladislav.grachev@gmail.com>"]
+readme = "README.md"
+packages = [{include = "report_generator"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+docxtpl = "^0.16.7"
+python-telegram-bot = "^20.7"
+python-dotenv = "^1.0.0"
+pydantic = "^1.10.8"
+pandas = "^2.1.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
