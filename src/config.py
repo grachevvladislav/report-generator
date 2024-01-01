@@ -7,6 +7,9 @@ class Settings(BaseSettings):
 
     telegram_token: SecretStr
 
+    bot_settings_url: SecretStr
+    schedule_url: SecretStr
+
     class Config:
         """Env settings."""
 

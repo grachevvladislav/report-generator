@@ -1,19 +1,7 @@
-from telegram.ext import ApplicationBuilder
-from docxtpl import DocxTemplate
-from datetime import datetime
-from telegram.ext import Updater, MessageHandler, filters
-import json
+from telegram.ext import ApplicationBuilder, MessageHandler, Updater, filters
 
 from config import settings
-from handlers import downloader
-
-
-def create_doc(context):
-    #context['date'] = datetime.today().strftime('%d.%m.%Y')
-    print(context)
-    doc = DocxTemplate('sample.docx')
-    # doc.render(context)
-    # doc.save("new.docx")
+from handlers import make_report
 
 
 def main():
@@ -24,7 +12,7 @@ def main():
         #.persistence(persistence)
         .build()
     )
-    app.add_handler(MessageHandler(filters.Document.ALL, downloader))
+    app.add_handler(MessageHandler(filters.Document.ALL, make_report))
     app.run_polling()
 
 

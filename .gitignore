@@ -160,5 +160,5 @@ cython_debug/
 #.idea/
 
 files/pattern.docx
-files/new.docx
-files/employees.json
+files/inspired-alcove.json
+files/

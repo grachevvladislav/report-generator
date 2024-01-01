@@ -1,25 +1,45 @@
-import io
-import pandas as pd
+import datetime
+
+import dateutil.relativedelta
+
+from exceptions import ParseFail
+from file_parse import report_parsing, create_doc
+from google_sheet_backend import get_admins_working_time, get_employees
+from google_sheet_backend import get_settings_sheets, get_constants
 
 
-async def downloader(update, context):
+async def make_report(update, context):
+    settings_sheets = get_settings_sheets()
+    constants = get_constants(settings_sheets)
+    if not update.message.from_user['id'] in constants['stuff_ids']:
+        await update.message.reply_text('Обработка файлов недоступна!')
+        return
+
+    try:
+        employees: dict = get_employees(settings_sheets['employees'])
+    except ParseFail as e:
+        await update.message.reply_text(
+            f'Информация о сотрудниках:\n\n{e}')
+        return
+
     file = await update.message.document.get_file()
     binary_file = await file.download_as_bytearray()
-    with io.BytesIO(binary_file) as memory_file:
-        print(pd.read_csv(memory_file))
+    try:
+        report_parsing(employees, binary_file, constants)
+    except ParseFail as e:
+        await update.message.reply_text(
+            f'Отчет KPI:\n\n{e}')
+        return
 
+    last_month = (datetime.datetime.now() +
+                  dateutil.relativedelta.relativedelta(months=-1))
+    ## for dev
+    last_month = datetime.datetime.strptime('2024.01.01', '%Y.%m.%d')
+    try:
+        get_admins_working_time(employees, last_month, constants)
+    except ParseFail as e:
+        await update.message.reply_text(
+            f'График работы администраторов:\n\n{e}')
+        return
 
-
-    #await new_file.d
-    # #await context.bot.get_file(update.message.document).download()
-    # # writing to a custom file
-    # with open("file.csv", 'wb') as f:
-    #     await context.bot.get_file(update.message.document)
-    #     update.message.document.download_to_drive
-
-
-#
-# with io.BytesIO(r.content) as inmemoryfile:
-#     mixer.music.init()
-#     mixer.music.load(inmemoryfile)
-#     mixer.music.play()
+    create_doc(employees)
