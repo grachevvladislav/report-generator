@@ -22,7 +22,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          file: bot/Dockerfile
           tags: ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}:latest
 
 
