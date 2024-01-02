@@ -19,12 +19,5 @@ def surname_and_initials(fio: str) -> str:
     return f"{full_name[0]} {full_name[1][0]}.{full_name[2][0]}."
 
 
-def add_or_create(dictionary: dict, key: any, value: any) -> None:
-    if key in dictionary.keys():
-        dictionary[key] += value
-    else:
-        dictionary[key] = value
-
-
 font_path = Path("files/Source Serif Pro.ttf")
 custom_font = TrueTypeFont.true_type_font_from_file(font_path)

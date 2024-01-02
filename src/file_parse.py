@@ -7,7 +7,6 @@ from borb.pdf import PDF, Document
 
 from exceptions import ParseFail
 from file_creator import create_list
-from utils import add_or_create
 
 
 def report_parsing(employees: dict, binary_file: bytearray) -> None:
@@ -16,11 +15,7 @@ def report_parsing(employees: dict, binary_file: bytearray) -> None:
     for record in data:
         money = float(record["Оплачено,\xa0₽"])
         try:
-            add_or_create(
-                dictionary=employees[record["Инициатор"]],
-                key="kpi_money",
-                value=money,
-            )
+            employees[record["Инициатор"]]["kpi_money"] = money
         except KeyError:
             raise ParseFail(f'Неизвестный кассир:\n{record["Инициатор"]}')
 

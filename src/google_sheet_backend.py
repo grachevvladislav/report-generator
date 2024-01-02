@@ -3,7 +3,7 @@ import datetime
 from config import settings
 from exceptions import ParseFail
 from services import service
-from utils import add_or_create, name_shortener
+from utils import name_shortener
 
 keys = [
     "fio",
@@ -16,6 +16,8 @@ keys = [
     "agreement_number",
     "agreement_date",
     "role",
+    "work_time",
+    "kpi_money",
 ]
 
 
@@ -48,8 +50,10 @@ def get_employees(data: list[list[str]]) -> dict:
         if employee[10] == "Нет":
             continue
         employees[name_shortener(employee[0])] = {}
-        for key, value in zip(keys, employee[:10]):
+        for key, value in zip(keys[:10], employee[:10]):
             employees[name_shortener(employee[0])][key] = value
+        for key in keys[10:]:
+            employees[name_shortener(employee[0])][key] = 0
     return employees
 
 
@@ -94,11 +98,7 @@ def get_admins_working_time(employees, period, constants):
                     )
             else:
                 time = constants["default_working_time"]
-            add_or_create(
-                dictionary=employees[name_shortener(day[1])],
-                key="work_time",
-                value=time,
-            )
+            employees[name_shortener(day[1])]["work_time"] += time
 
 
 def update_document_counter(constants: dict) -> None:
