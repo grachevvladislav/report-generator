@@ -1,0 +1,9 @@
+version: '3.7'
+services:
+  bot:
+    image: grachevvladislav/report-generator:latest
+    restart: always
+    volumes:
+      - ./inspired-alcove.json:./files/inspired-alcove.json
+    env_file:
+      - .env
