@@ -20,6 +20,7 @@ pandas = "^2.1.4"
 isort = "^5.13.2"
 black = "^23.12.1"
 pre-commit = "^3.6.0"
+poetry-plugin-export = "^1.6.0"
 
 [build-system]
 requires = ["poetry-core"]
