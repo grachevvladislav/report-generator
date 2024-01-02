@@ -6,17 +6,17 @@ from exceptions import ParseFail
 
 
 def name_shortener(fio: str) -> str:
-    full_name = fio.split(' ')
+    full_name = fio.split(" ")
     if not len(full_name) == 3:
-        raise ParseFail(f'Ошибка в ФИО:\n{fio}')
-    return f'{full_name[0]} {full_name[1][0]}.'
+        raise ParseFail(f"Ошибка в ФИО:\n{fio}")
+    return f"{full_name[0]} {full_name[1][0]}."
 
 
 def surname_and_initials(fio: str) -> str:
-    full_name = fio.split(' ')
+    full_name = fio.split(" ")
     if not len(full_name) == 3:
-        raise ParseFail(f'Ошибка в ФИО:\n{fio}')
-    return f'{full_name[0]} {full_name[1][0]}.{full_name[2][0]}.'
+        raise ParseFail(f"Ошибка в ФИО:\n{fio}")
+    return f"{full_name[0]} {full_name[1][0]}.{full_name[2][0]}."
 
 
 def add_or_create(dictionary: dict, key: any, value: any) -> None:
@@ -26,5 +26,5 @@ def add_or_create(dictionary: dict, key: any, value: any) -> None:
         dictionary[key] = value
 
 
-font_path = Path('files/Source Serif Pro.ttf')
+font_path = Path("files/Source Serif Pro.ttf")
 custom_font = TrueTypeFont.true_type_font_from_file(font_path)
