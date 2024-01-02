@@ -3,9 +3,9 @@ import datetime
 import dateutil.relativedelta
 
 from exceptions import ParseFail
-from file_parse import report_parsing, create_doc
-from google_sheet_backend import get_admins_working_time, get_employees
-from google_sheet_backend import get_settings_sheets, get_constants
+from file_parse import create_pdf, report_parsing
+from google_sheet_backend import (get_admins_working_time, get_constants,
+                                  get_employees, get_settings_sheets, update_document_counter)
 
 
 async def make_report(update, context):
@@ -25,7 +25,7 @@ async def make_report(update, context):
     file = await update.message.document.get_file()
     binary_file = await file.download_as_bytearray()
     try:
-        report_parsing(employees, binary_file, constants)
+        report_parsing(employees, binary_file)
     except ParseFail as e:
         await update.message.reply_text(
             f'Отчет KPI:\n\n{e}')
@@ -41,5 +41,14 @@ async def make_report(update, context):
         await update.message.reply_text(
             f'График работы администраторов:\n\n{e}')
         return
-
-    create_doc(employees)
+    await update.message.reply_text('Данные обрабатываются ⏳')
+    try:
+        pdf_file = create_pdf(employees, last_month, constants)
+    except ParseFail as e:
+        await update.message.reply_text(
+            f'Сборка отчета:\n\n{e}')
+        return
+    await update.message.reply_document(
+        pdf_file, filename=f'{last_month.strftime("%B %Y")}.pdf'
+    )
+    update_document_counter(constants)

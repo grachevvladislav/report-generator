@@ -1,16 +1,23 @@
+import datetime
 import io
-from docxtpl import DocxTemplate
+from calendar import monthrange
+
+
 import pandas as pd
-from utils import add_or_create
+from borb.pdf import PDF, Document
+
 from exceptions import ParseFail
+from utils import add_or_create
+from file_creator import create_list
 
 
 def report_parsing(
-        employees: dict, binary_file: bytearray, constants: dict) -> None:
+        employees: dict, binary_file: bytearray
+) -> None:
     with io.BytesIO(binary_file) as memory_file:
         data = pd.read_csv(memory_file).to_dict('records')
     for record in data:
-        money = float(record['Оплачено,\xa0₽']) * constants['percentage_of_sales'] / 100
+        money = float(record['Оплачено,\xa0₽'])
         try:
             add_or_create(
                 dictionary=employees[record['Инициатор']],
@@ -21,12 +28,21 @@ def report_parsing(
             raise ParseFail(f'Неизвестный кассир:\n{record["Инициатор"]}')
 
 
-def create_doc(context):
-    for tmp in context.values():
-        #context['date'] = datetime.today().strftime('%d.%m.%Y')
-        print(tmp)
-        print()
-        doc = DocxTemplate('files/pattern.docx')
-        doc.render(tmp)
-        doc.save("new.docx")
-        break
+def create_pdf(
+        employees: dict[dict], last_month: datetime.datetime, constants: dict
+) -> io.BytesIO:
+    doc = Document()
+    constants['date'] = datetime.datetime.today().strftime('%d.%m.%Y')
+    constants['from'] = f'1.{last_month.month}.{last_month.year}г.'
+    constants['to'] = (f'{monthrange(last_month.year, last_month.month)[1]}.'
+                       f'{last_month.month}.{last_month.year}г')
+    for employee in employees.values():
+        constants['document_counter'] += 1
+        employee.update(constants)
+        page = create_list(employee)
+        doc.add_page(page)
+
+    memory_file = io.BytesIO()
+    PDF.dumps(memory_file, doc)
+    memory_file.seek(0)
+    return memory_file

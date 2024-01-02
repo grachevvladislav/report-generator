@@ -3,7 +3,7 @@ import datetime
 from config import settings
 from exceptions import ParseFail
 from services import service
-from utils import name_shortener, add_or_create
+from utils import add_or_create, name_shortener
 
 keys = ['fio', 'inn', 'address', 'checking_account', 'bank', 'bik',
         'correspondent_account', 'agreement_number', 'agreement_date', 'role']
@@ -40,8 +40,10 @@ def get_constants(settings_sheets: dict) -> dict:
         'percentage_of_sales': float(settings_sheets['constants'][1][0]),
         'admin_by_hours': float(settings_sheets['constants'][2][0]),
         'trainer_by_hours': float(settings_sheets['constants'][3][0]),
-        'document_counter': float(settings_sheets['document_counter'][0][0]),
-        'stuff_ids': [int(x[0]) for x in settings_sheets['admins']]
+        'document_counter': int(settings_sheets['document_counter'][0][0]),
+        'stuff_ids': [int(x[0]) for x in settings_sheets['admins']],
+        'customer_details': settings_sheets['constants'][4][0],
+        'customer_short': settings_sheets['constants'][5][0],
     }
     return constants
 
@@ -69,6 +71,18 @@ def get_admins_working_time(employees, period, constants):
                 time = constants['default_working_time']
             add_or_create(
                 dictionary=employees[name_shortener(day[1])],
-                key='work_time_money',
-                value=time * constants['admin_by_hours']
+                key='work_time',
+                value=time
             )
+
+
+def update_document_counter(constants: dict) -> None:
+    service.spreadsheets().values().update(
+        spreadsheetId=settings.bot_settings_url.get_secret_value(),
+        range='document_counter!A1',
+        valueInputOption='USER_ENTERED',
+        body={
+            'majorDimension': 'ROWS',
+            'values': [[constants['document_counter']]]
+        }
+    ).execute()
