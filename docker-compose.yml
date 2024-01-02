@@ -4,6 +4,6 @@ services:
     image: grachevvladislav/report-generator:latest
     restart: always
     volumes:
-      - ./inspired-alcove.json:./files/inspired-alcove.json
+      - ./inspired-alcove.json:/files/inspired-alcove.json
     env_file:
       - .env
