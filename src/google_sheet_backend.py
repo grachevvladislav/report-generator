@@ -1,5 +1,7 @@
 import datetime
 
+import dateutil
+
 from config import settings
 from constants.exceptions import AdminFail, ParseFail
 from models import Employees
@@ -25,6 +27,9 @@ def get_settings_sheets() -> dict:
     )
     for table in tables_raw:
         tables_dict[table["range"].split("!")[0]] = table["values"]
+    last_month = datetime.datetime.now()
+    if not settings.debug:
+        last_month += dateutil.relativedelta.relativedelta(months=-1)
     constants = {
         "default_working_time": float(tables_dict["constants"][0][0]),
         "percentage_of_sales": float(tables_dict["constants"][0][1]),
@@ -36,10 +41,7 @@ def get_settings_sheets() -> dict:
         "document_counter": int(tables_dict["document_counter"][0][0]),
         "stuff_ids": [int(x[0]) for x in tables_dict["admins"]],
         "employees": tables_dict["employees"],
-        "last_month": (
-            datetime.datetime.now()
-            # + dateutil.relativedelta.relativedelta(months=-1)
-        ),
+        "last_month": last_month,
     }
     return constants
 
