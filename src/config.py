@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     bot_settings_url: SecretStr
     schedule_url: SecretStr
 
+    redis_port: SecretStr
+    redis_host: SecretStr
+    debug: bool = False
+
     class Config:
         """Env settings."""
 

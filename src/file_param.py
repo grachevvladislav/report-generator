@@ -11,11 +11,11 @@ from borb.pdf import (
     TableCell,
 )
 
+from constants.exceptions import InnerFail
 from utils import custom_font, surname_and_initials
 
 
 def create_list(employee: dict) -> Page:
-    print(employee)
     page = Page()
     layout = SingleColumnLayout(page)
     layout.add(
@@ -24,7 +24,7 @@ def create_list(employee: dict) -> Page:
             TableCell(
                 Paragraph(
                     f"Акт №{employee['document_counter']} от {employee['date']}. "
-                    f"За период с {employee['from']} по {employee['to']}.",
+                    f"За период с {employee['from']} по {employee['to']}",
                     font=custom_font,
                     font_size=Decimal(10),
                 ),
@@ -37,6 +37,7 @@ def create_list(employee: dict) -> Page:
             Decimal(2), Decimal(2), Decimal(2), Decimal(2)
         )
     )
+
     layout.add(
         Paragraph(
             f"Исполнитель: СЗ {employee['fio']}, {employee['inn']}, "
@@ -51,23 +52,20 @@ def create_list(employee: dict) -> Page:
             respect_newlines_in_text=True,
         )
     )
-    main_table = FlexibleColumnWidthTable(
-        number_of_columns=6, number_of_rows=5
-    )
     if employee["role"] == "Администратор":
         summ = str(
-            (employee["kpi_money"] * employee["percentage_of_sales"] / 100)
-            + employee["admin_by_hours"] * employee["work_time"]
+            (employee["admin_money"] * employee["percentage_of_sales"] / 100)
+            + employee["admin_work_time"] * employee["admin_by_hours"]
         )
         table_data = [
             ["№ п/п", "Наименование услуги", "Кол-во", "Ед.", "Цена", "Сумма"],
             [
                 "1",
                 "Административная деятельность",
-                str(employee["work_time"]),
+                str(employee["admin_work_time"]),
                 "ч.",
                 str(employee["admin_by_hours"]),
-                str(employee["admin_by_hours"] * employee["work_time"]),
+                str(employee["admin_work_time"] * employee["admin_by_hours"]),
             ],
             [
                 "2",
@@ -75,12 +73,12 @@ def create_list(employee: dict) -> Page:
                 "1",
                 "шт.",
                 str(
-                    employee["kpi_money"]
+                    employee["admin_money"]
                     * employee["percentage_of_sales"]
                     / 100
                 ),
                 str(
-                    employee["kpi_money"]
+                    employee["admin_money"]
                     * employee["percentage_of_sales"]
                     / 100
                 ),
@@ -88,10 +86,33 @@ def create_list(employee: dict) -> Page:
             ["", "", "", "", "Итого:", summ],
             ["", "", "", "", "Без налога\n(НДС)", ""],
         ]
+    elif employee["role"] == "Тренер":
+        summ = 0
+        lines = []
+        counter = 0
+        for key, count in employee["conducted_classes"].items():
+            name, coast = key.split("$")
+            counter += 1
+            line_summ = float(coast) * float(count)
+            summ += line_summ
+            lines += [
+                [str(counter), name, str(count), "шт.", coast, str(line_summ)]
+            ]
+        table_data = [
+            ["№ п/п", "Наименование услуги", "Кол-во", "Ед.", "Цена", "Сумма"],
+            *lines,
+            ["", "", "", "", "Итого:", str(summ)],
+            ["", "", "", "", "Без налога\n(НДС)", ""],
+        ]
     else:
-        return page
-
-    for line in table_data[:3]:
+        raise InnerFail(
+            "Неизвестная роль при  создании страницы: " + employee["role"]
+        )
+    table_separator = len(table_data) - 2
+    main_table = FlexibleColumnWidthTable(
+        number_of_columns=6, number_of_rows=len(table_data)
+    )
+    for line in table_data[:table_separator]:
         for field in line:
             main_table.add(
                 TableCell(
@@ -107,7 +128,7 @@ def create_list(employee: dict) -> Page:
                     border_width=Decimal(0.5),
                 )
             )
-    for line in table_data[3:]:
+    for line in table_data[table_separator:]:
         for field in line:
             main_table.add(
                 TableCell(
@@ -133,8 +154,8 @@ def create_list(employee: dict) -> Page:
     layout.add(
         Paragraph(
             f"Всего к оказано услуг на сумму {summ} руб.\n\nВышеперечисленные "
-            f"услуги выполнены полностью и в срок. Заказчик претензий по объему, "
-            f"качеству, срокам оказания услуг не имеет.",
+            f"услуги выполнены полностью и в срок. Заказчик претензий по "
+            f"объему, качеству, срокам оказания услуг не имеет.",
             font=custom_font,
             font_size=Decimal(7),
             respect_newlines_in_text=True,

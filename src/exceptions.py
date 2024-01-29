@@ -1,2 +1,0 @@
-class ParseFail(Exception):
-    """ParseFail"""

@@ -1,9 +1,31 @@
 version: '3.7'
 services:
+  redis:
+    image: redis:7.2.0
+    container_name: report-generator-redis
+    ports:
+      - "6379:6379"
+    restart: always
+    command: >
+      bash -c "
+        mkdir /data/log -p &&
+        mkdir /data/bases -p &&
+        touch /data/log/redis-server.log &&
+        redis-server /usr/local/etc/redis.conf | tee -a /data/log/redis-server.log
+      "
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis.conf
+      - redis_volume:/data
+      - ../../logs/redis/:/var/log/
+
   bot:
     image: grachevvladislav/report-generator:latest
+    container_name: report-generator-bot
+    depends_on:
+      - redis
     restart: always
-    volumes:
-      - ./inspired-alcove.json:/files/inspired-alcove.json
     env_file:
       - .env
+
+volumes:
+  redis_volume:

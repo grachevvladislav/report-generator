@@ -5,35 +5,70 @@ from calendar import monthrange
 import pandas as pd
 from borb.pdf import PDF, Document
 
-from exceptions import ParseFail
-from file_creator import create_list
+from constants.constants import role_fields
+from constants.exceptions import ParseFail
+from constants.roles import Roles
+from file_param import create_list
+from google_sheet_backend import (
+    get_admins_working_time,
+    get_employees_info,
+    set_default_classes,
+)
+from models import Employees
 
 
-def report_parsing(employees: dict, binary_file: bytearray) -> None:
+def report_parsing(binary_file: bytearray, constants: dict) -> Employees:
     with io.BytesIO(binary_file) as memory_file:
         data = pd.read_csv(memory_file).to_dict("records")
-    for record in data:
-        money = float(record["Оплачено,\xa0₽"])
-        try:
-            employees[record["Инициатор"]]["kpi_money"] = money
-        except KeyError:
-            raise ParseFail(f'Неизвестный кассир:\n{record["Инициатор"]}')
+    if all(
+        key in data[0].keys() for key in role_fields[Roles.ADMINISTRATOR.value]
+    ):
+        mode = Roles.ADMINISTRATOR.value
+    elif all(
+        key in data[0].keys() for key in role_fields[Roles.TRAINER.value]
+    ):
+        mode = Roles.TRAINER.value
+    else:
+        raise ParseFail("Неизвестный вид отчета. Нет обязательных полей.")
+    employees = get_employees_info(constants["employees"], mode)
+    if mode == Roles.ADMINISTRATOR.value:
+        get_admins_working_time(employees, constants)
+        fields = role_fields[mode]
+        for line in data:
+            employees.set_attribute(
+                line[fields[1]], admin_money=float(line[fields[0]])
+            )
+    elif mode == Roles.TRAINER.value:
+        set_default_classes(employees, constants)
+        fields = role_fields[mode]
+        for line in data:
+            money, name, comment, person = [line[field] for field in fields]
+            full_name = ""
+            for field in [name, comment]:
+                if field and not str(field) == "nan" and not field == "-":
+                    full_name += str(field)
+            employees.set_attribute(
+                person,
+                conducted_classes={full_name + "$" + str(money): 1},
+            )
+    return employees
 
 
-def create_pdf(
-    employees: dict[dict], last_month: datetime.datetime, constants: dict
-) -> io.BytesIO:
+def create_pdf(employees: Employees, constants: dict) -> io.BytesIO:
     doc = Document()
     constants["date"] = datetime.datetime.today().strftime("%d.%m.%Y")
-    constants["from"] = f"1.{last_month.month}.{last_month.year}г."
-    constants["to"] = (
-        f"{monthrange(last_month.year, last_month.month)[1]}."
-        f"{last_month.month}.{last_month.year}г"
-    )
-    for employee in employees.values():
+    constants["from"] = f"1.{constants['last_month'].strftime('%m.%Y')}г."
+    last_day_of_month = monthrange(
+        constants["last_month"].year, constants["last_month"].month
+    )[1]
+    constants[
+        "to"
+    ] = f"{last_day_of_month}.{constants['last_month'].strftime('%m.%Y')}г."
+    for employee in employees.get_active_employee():
         constants["document_counter"] += 1
-        employee.update(constants)
-        page = create_list(employee)
+        employee_dict = employee.to_dict()
+        employee_dict.update(constants)
+        page = create_list(employee_dict)
         doc.add_page(page)
 
     memory_file = io.BytesIO()
