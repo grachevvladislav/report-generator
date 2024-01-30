@@ -14,6 +14,7 @@ from constants.states import States
 from handlers import (
     counter_increase,
     make_report,
+    show_schedule,
     start_handler,
     wait_for_new_report,
 )
@@ -53,6 +54,12 @@ def main():
                 CallbackQueryHandler(
                     wait_for_new_report,
                     pattern="^" + str(Buttons.NO.name) + "$",
+                ),
+            ],
+            States.ADMINS_MENU: [],
+            States.SCHEDULE: [
+                CallbackQueryHandler(
+                    show_schedule,
                 ),
             ],
         },

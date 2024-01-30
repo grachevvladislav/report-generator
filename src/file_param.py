@@ -11,8 +11,9 @@ from borb.pdf import (
     TableCell,
 )
 
+from constants.constants import custom_font
 from constants.exceptions import InnerFail
-from utils import custom_font, surname_and_initials
+from utils import surname_and_initials
 
 
 def create_list(employee: dict) -> Page:

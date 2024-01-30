@@ -4,9 +4,32 @@ import dateutil
 
 from config import settings
 from constants.exceptions import AdminFail, ParseFail
+from constants.roles import Roles
 from models import Employees
 from services import service
-from utils import make_short_name
+from utils import key_name_generator
+
+
+def get_user_permissions() -> dict:
+    tables_raw = (
+        service.spreadsheets()
+        .values()
+        .get(
+            spreadsheetId=settings.bot_settings_url.get_secret_value(),
+            range="employees!A:N",
+        )
+        .execute()["values"]
+    )
+    constants = {
+        "stuff_ids": [],
+        "admins_dict": {},
+    }
+    for line in tables_raw:
+        if line[10] == Roles.STUFF.value:
+            constants["stuff_ids"].append(line[9])
+        elif line[10] == Roles.ADMINISTRATOR.value:
+            constants["admins_dict"][line[9]] = line[0]
+    return constants
 
 
 def get_settings_sheets() -> dict:
@@ -16,12 +39,7 @@ def get_settings_sheets() -> dict:
         .values()
         .batchGet(
             spreadsheetId=settings.bot_settings_url.get_secret_value(),
-            ranges=[
-                "admins!A:A",
-                "document_counter!A1",
-                "employees!A:N",
-                "constants!A2:G",
-            ],
+            ranges=["document_counter!A1", "constants!A2:G", "employees!A:N"],
         )
         .execute()["valueRanges"]
     )
@@ -39,9 +57,8 @@ def get_settings_sheets() -> dict:
         "customer_short": tables_dict["constants"][0][5],
         "default_classes": [x[6] for x in tables_dict["constants"]],
         "document_counter": int(tables_dict["document_counter"][0][0]),
-        "stuff_ids": [int(x[0]) for x in tables_dict["admins"]],
-        "employees": tables_dict["employees"],
         "last_month": last_month,
+        "employees": tables_dict["employees"],
     }
     return constants
 
@@ -80,7 +97,7 @@ def get_admins_working_time(employees, constants):
     for day in results["values"]:
         if not len(day) > 1 or day[1] == "--":
             continue
-        if make_short_name(day[1]) not in employees.get_names():
+        if key_name_generator(day[1]) not in employees.get_names():
             employees.add_notification(
                 f'Неизвестный сотрудник в расписании\n {" ".join(day)}'
             )
@@ -102,6 +119,48 @@ def get_admins_working_time(employees, constants):
             else:
                 time = constants["default_working_time"]
             employees.set_attribute(day[1].strip(), admin_work_time=time)
+
+
+def get_admin_schedule(client_name, data_range=None) -> (list, list):
+    now_date = datetime.datetime.now()
+    if data_range:
+        data_range = datetime.datetime.strptime(data_range, "%m.%Y")
+    else:
+        data_range = now_date
+    raw_table = (
+        service.spreadsheets()
+        .values()
+        .get(
+            spreadsheetId=settings.schedule_url.get_secret_value(),
+            range=f"{data_range.year}!A2:B900",
+        )
+        .execute()
+    )
+    result = [f"Рабочий график на {data_range.month}:"]
+    delimiter = "---"
+    for day in raw_table["values"]:
+        if not len(day) > 1 or day[1] == "--":
+            continue
+        try:
+            db_date = datetime.datetime.strptime(day[0], "%d.%m.%Y")
+        except ValueError:
+            raise AdminFail(f'Ошибка в дате\n{" ".join(day)}')
+        if client_name == day[1] and db_date.month == data_range.month:
+            if now_date > db_date:
+                line = "✅ "
+            else:
+                line = "☑️ "
+            line += db_date.strftime("%d %B")
+            result.append(line)
+        elif not result[-1] == delimiter:
+            result.append(delimiter)
+    up = data_range + dateutil.relativedelta.relativedelta(months=1)
+    down = data_range + dateutil.relativedelta.relativedelta(months=-1)
+    buttons = [
+        [down.strftime("<- %B"), down.strftime("%m.%Y")],
+        [up.strftime("%B ->"), up.strftime("%m.%Y")],
+    ]
+    return result, buttons
 
 
 def update_document_counter(constants: dict) -> None:

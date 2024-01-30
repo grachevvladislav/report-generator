@@ -1,23 +1,62 @@
 from telegram.ext import CommandHandler
 
 from constants.exceptions import AdminFail, EmployeeFail, InnerFail, ParseFail
-from constants.keyboards import confirm_keyboard
+from constants.keyboards import confirm_keyboard, keyboard_from_list
 from constants.states import States
 from file_parse import create_pdf, report_parsing
-from google_sheet_backend import get_settings_sheets, update_document_counter
+from google_sheet_backend import (
+    get_admin_schedule,
+    get_settings_sheets,
+    get_user_permissions,
+    update_document_counter,
+)
+
+
+async def show_schedule(update, context):
+    query = update.callback_query
+    if query:
+        data_delta = query.data
+    else:
+        data_delta = None
+    schedule, buttons = get_admin_schedule(
+        context.user_data["admins_dict"][str(update.effective_chat["id"])],
+        data_delta,
+    )
+    if update.message:
+        await update.message.reply_text(
+            "\n".join(schedule),
+            reply_markup=keyboard_from_list(buttons),
+        )
+    else:
+        await query.edit_message_text(
+            "\n".join(schedule),
+            reply_markup=keyboard_from_list(buttons),
+        )
+    return States.SCHEDULE
 
 
 async def start(update, context):
-    context.user_data.update(
-        get_settings_sheets()
-    )  # нужно написать упрощенную функцию
-    if update.message.from_user["id"] in context.user_data["stuff_ids"]:
+    context.user_data.update(get_user_permissions())
+    client_id = str(update.message.from_user["id"])
+    if client_id in context.user_data["admins_dict"].keys():
+        return await show_schedule(update, context)
+    elif client_id in context.user_data["stuff_ids"]:
         await update.message.reply_text(
             "Отправьте отчет о продажах или проведенных занятиях"
         )
         return States.WAITING_FOR_FILE
     else:
-        await update.message.reply_text("Обработка файлов недоступна!")
+        for stuff in context.user_data["stuff_ids"]:
+            await context.bot.send_message(
+                chat_id=stuff,
+                text=f"Поступил запрос от {update.effective_chat.first_name} "
+                f"{update.effective_chat.last_name}\n"
+                f"@{update.effective_chat.username}\n"
+                f"id:{update.effective_chat.id}",
+            )
+        await update.message.reply_text(
+            "Доступ пока закрыт, но запрос уже отправлен администратору!"
+        )
         return States.PERMISSION_DENIED
 
 

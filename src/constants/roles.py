@@ -6,3 +6,4 @@ class Roles(str, enum.Enum):
 
     ADMINISTRATOR = "Администратор"
     TRAINER = "Тренер"
+    STUFF = "stuff"

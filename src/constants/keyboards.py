@@ -22,3 +22,12 @@ confirm_keyboard = InlineKeyboardMarkup(
         ]
     ]
 )
+
+
+def keyboard_from_list(buttons):
+    result = [[]]
+    for button in buttons:
+        result[0].append(
+            InlineKeyboardButton(button[0], callback_data=button[1])
+        )
+    return InlineKeyboardMarkup(result)

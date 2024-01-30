@@ -1,5 +1,5 @@
 from constants.exceptions import InnerFail
-from utils import make_short_name
+from utils import key_name_generator
 
 
 class Employee:
@@ -76,7 +76,7 @@ class Employees:
                 "Нельзя добавить сотрудника без имени.\n"
                 + " ".join(kwargs.values())
             )
-        key_name = make_short_name(kwargs["fio"])
+        key_name = key_name_generator(kwargs["fio"])
         if key_name in self.dict.keys():
             raise InnerFail(
                 f"Добавление нового сотрудника.\n"
@@ -88,7 +88,7 @@ class Employees:
     def set_attribute(self, name, *_, **kwargs):
         """Set params to employee."""
         name = kwargs.pop("fio", name)
-        key_name = make_short_name(name)
+        key_name = key_name_generator(name)
         if key_name not in self.dict.keys():
             self.add_employee(fio=name, **kwargs)
         else:
