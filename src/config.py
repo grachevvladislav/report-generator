@@ -1,3 +1,5 @@
+import locale
+
 from dotenv import find_dotenv
 from pydantic import BaseSettings, SecretStr
 
@@ -22,3 +24,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+locale.setlocale(locale.LC_TIME, "ru_RU.UTF-8")

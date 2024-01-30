@@ -15,6 +15,7 @@ from handlers import (
     counter_increase,
     make_report,
     show_schedule,
+    start,
     start_handler,
     wait_for_new_report,
 )
@@ -43,7 +44,11 @@ def main():
         persistent=True,
         name="main_handler",
         states={
-            States.PERMISSION_DENIED: [],
+            States.PERMISSION_DENIED: [
+                CallbackQueryHandler(
+                    start, pattern="^" + str(Buttons.RELOAD.name) + "$"
+                ),
+            ],
             States.WAITING_FOR_FILE: [
                 MessageHandler(filters.Document.ALL, make_report)
             ],

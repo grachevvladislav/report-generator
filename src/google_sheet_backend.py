@@ -1,8 +1,10 @@
 import datetime
+import re
 
 import dateutil
 
 from config import settings
+from constants.constants import data_button_pattern, months
 from constants.exceptions import AdminFail, ParseFail
 from constants.roles import Roles
 from models import Employees
@@ -25,9 +27,9 @@ def get_user_permissions() -> dict:
         "admins_dict": {},
     }
     for line in tables_raw:
-        if line[10] == Roles.STUFF.value:
+        if line[10] == Roles.STUFF.value and line[11] == "Да":
             constants["stuff_ids"].append(line[9])
-        elif line[10] == Roles.ADMINISTRATOR.value:
+        elif line[10] == Roles.ADMINISTRATOR.value and line[11] == "Да":
             constants["admins_dict"][line[9]] = line[0]
     return constants
 
@@ -122,9 +124,11 @@ def get_admins_working_time(employees, constants):
 
 
 def get_admin_schedule(client_name, data_range=None) -> (list, list):
-    now_date = datetime.datetime.now()
-    if data_range:
-        data_range = datetime.datetime.strptime(data_range, "%m.%Y")
+    now_date = datetime.datetime.today()
+    if re.match(r"^[0-9]{2}\.[0-9]{4}$", data_range):
+        data_range = datetime.datetime.strptime(
+            data_range, data_button_pattern
+        )
     else:
         data_range = now_date
     raw_table = (
@@ -136,7 +140,7 @@ def get_admin_schedule(client_name, data_range=None) -> (list, list):
         )
         .execute()
     )
-    result = [f"Рабочий график на {data_range.month}:"]
+    result = [f"Актуальный график на {months[data_range.month-1]}:"]
     delimiter = "---"
     for day in raw_table["values"]:
         if not len(day) > 1 or day[1] == "--":
@@ -157,8 +161,8 @@ def get_admin_schedule(client_name, data_range=None) -> (list, list):
     up = data_range + dateutil.relativedelta.relativedelta(months=1)
     down = data_range + dateutil.relativedelta.relativedelta(months=-1)
     buttons = [
-        [down.strftime("<- %B"), down.strftime("%m.%Y")],
-        [up.strftime("%B ->"), up.strftime("%m.%Y")],
+        ["<- " + months[down.month - 1], down.strftime(data_button_pattern)],
+        [months[up.month - 1] + " ->", up.strftime(data_button_pattern)],
     ]
     return result, buttons
 

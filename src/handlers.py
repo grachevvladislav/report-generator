@@ -1,7 +1,13 @@
+import datetime
+
 from telegram.ext import CommandHandler
 
 from constants.exceptions import AdminFail, EmployeeFail, InnerFail, ParseFail
-from constants.keyboards import confirm_keyboard, keyboard_from_list
+from constants.keyboards import (
+    confirm_keyboard,
+    keyboard_from_list,
+    start_keyboard,
+)
 from constants.states import States
 from file_parse import create_pdf, report_parsing
 from google_sheet_backend import (
@@ -37,7 +43,7 @@ async def show_schedule(update, context):
 
 async def start(update, context):
     context.user_data.update(get_user_permissions())
-    client_id = str(update.message.from_user["id"])
+    client_id = str(update.effective_chat["id"])
     if client_id in context.user_data["admins_dict"].keys():
         return await show_schedule(update, context)
     elif client_id in context.user_data["stuff_ids"]:
@@ -47,16 +53,28 @@ async def start(update, context):
         return States.WAITING_FOR_FILE
     else:
         for stuff in context.user_data["stuff_ids"]:
-            await context.bot.send_message(
-                chat_id=stuff,
-                text=f"Поступил запрос от {update.effective_chat.first_name} "
-                f"{update.effective_chat.last_name}\n"
-                f"@{update.effective_chat.username}\n"
-                f"id:{update.effective_chat.id}",
+            if "request_send" not in context.user_data.keys():
+                await context.bot.send_message(
+                    chat_id=stuff,
+                    text=f"Поступил запрос от {update.effective_chat.first_name} "
+                    f"{update.effective_chat.last_name}\n"
+                    f"@{update.effective_chat.username}\n"
+                    f"id:{update.effective_chat.id}",
+                )
+                context.user_data["request_send"] = True
+        if update.message:
+            await update.message.reply_text(
+                "Доступ пока закрыт, но запрос уже отправлен администратору!",
+                reply_markup=start_keyboard,
             )
-        await update.message.reply_text(
-            "Доступ пока закрыт, но запрос уже отправлен администратору!"
-        )
+        else:
+            query = update.callback_query
+            await query.edit_message_text(
+                "Доступ пока закрыт, но запрос уже отправлен администратору!\n"
+                "Обновлено "
+                + datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
+                reply_markup=start_keyboard,
+            )
         return States.PERMISSION_DENIED
 
 
