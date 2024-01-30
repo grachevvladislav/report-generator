@@ -1,6 +1,7 @@
 FROM python:3.11-slim
-RUN apt-get update && apt-get install -y \
-    locales && \
+RUN apt-get update && \
+    apt-get install -y && \
+    apt-get install language-pack-ru && \
     rm -r /var/lib/apt/lists/*
 COPY src/ ./src
 COPY files/ ./files
