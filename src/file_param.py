@@ -24,8 +24,11 @@ def create_list(employee: dict) -> Page:
         .add(
             TableCell(
                 Paragraph(
-                    f"Акт №{employee['document_counter']} от {employee['date']}. "
-                    f"За период с {employee['from']} по {employee['to']}",
+                    f"Акт №{employee['document_counter']} от " f"04.02.2024г. "
+                    # f"{employee['date']}. "
+                    f"За период с {employee['from']} по "
+                    # f"04.02.2024г.",
+                    f"{employee['to']}",
                     font=custom_font,
                     font_size=Decimal(10),
                 ),

@@ -13,7 +13,7 @@ from utils import key_name_generator
 
 
 def get_user_permissions() -> dict:
-    tables_raw = (
+    table_raw = (
         service.spreadsheets()
         .values()
         .get(
@@ -26,12 +26,25 @@ def get_user_permissions() -> dict:
         "stuff_ids": [],
         "admins_dict": {},
     }
-    for line in tables_raw:
+    for line in table_raw:
         if line[10] == Roles.STUFF.value and line[11] == "Да":
             constants["stuff_ids"].append(line[9])
         elif line[10] == Roles.ADMINISTRATOR.value and line[11] == "Да":
             constants["admins_dict"][line[9]] = line[0]
     return constants
+
+
+def get_cashier_id() -> str:
+    value = (
+        service.spreadsheets()
+        .values()
+        .get(
+            spreadsheetId=settings.bot_settings_url.get_secret_value(),
+            range="constants!H2",
+        )
+        .execute()["values"]
+    )
+    return value[0][0]
 
 
 def get_settings_sheets() -> dict:
@@ -41,7 +54,7 @@ def get_settings_sheets() -> dict:
         .values()
         .batchGet(
             spreadsheetId=settings.bot_settings_url.get_secret_value(),
-            ranges=["document_counter!A1", "constants!A2:G", "employees!A:N"],
+            ranges=["document_counter!A1", "constants!A2:AA", "employees!A:N"],
         )
         .execute()["valueRanges"]
     )
@@ -100,7 +113,7 @@ def get_admins_working_time(employees, constants):
         if not len(day) > 1 or day[1] == "--":
             continue
         if key_name_generator(day[1]) not in employees.get_names():
-            employees.add_notification(
+            employees.add_notifications(
                 f'Неизвестный сотрудник в расписании\n {" ".join(day)}'
             )
         try:

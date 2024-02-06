@@ -12,3 +12,7 @@ class EmployeeFail(Exception):
 
 class InnerFail(Exception):
     """InnerError."""
+
+
+class EmailFail(Exception):
+    """EmailError."""

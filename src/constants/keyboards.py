@@ -3,7 +3,7 @@ import enum
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 
-def keyboard_from_list(buttons):
+def keyboard_generator(buttons):
     result = [[]]
     for button in buttons:
         result[0].append(
@@ -17,16 +17,28 @@ class Buttons(str, enum.Enum):
 
     YES = "Да"
     NO = "Нет"
+
     RELOAD = "Обновить"
 
+    CHECK_IS_READY = "Чек готов"
+    CONFIRMATION = "Подтвердить?"
 
-confirm_keyboard = keyboard_from_list(
+
+confirm_keyboard = keyboard_generator(
     [
         [Buttons.YES.value, Buttons.YES.name],
         [Buttons.NO.value, Buttons.NO.name],
     ]
 )
 
-start_keyboard = keyboard_from_list(
+start_keyboard = keyboard_generator(
     [[Buttons.RELOAD.value, Buttons.RELOAD.name]]
+)
+
+closing_confirmation_keyboard = keyboard_generator(
+    [[Buttons.CONFIRMATION.value, Buttons.CONFIRMATION.name]]
+)
+
+close_check_keyboard = keyboard_generator(
+    [[Buttons.CHECK_IS_READY.value, Buttons.CHECK_IS_READY.name]]
 )

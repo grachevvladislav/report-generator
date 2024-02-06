@@ -10,3 +10,6 @@ class States(str, enum.Enum):
 
     ADMINS_MENU = "admins_menu"
     SCHEDULE = "schedule"
+
+    WAITING_FOR_PAYMENT = "waiting_for_payment"
+    CONFIRMATION = "confirmation"

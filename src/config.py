@@ -14,6 +14,13 @@ class Settings(BaseSettings):
 
     redis_port: SecretStr
     redis_host: SecretStr
+
+    imap_ssl_host: SecretStr
+    imap_username: SecretStr
+    imap_password: SecretStr
+    imap_from_email: SecretStr
+    interval: SecretStr
+
     debug: bool = False
 
     class Config:

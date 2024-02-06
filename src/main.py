@@ -1,24 +1,9 @@
 from redis.asyncio import Redis
-from telegram.ext import (
-    ApplicationBuilder,
-    CallbackQueryHandler,
-    ConversationHandler,
-    MessageHandler,
-    PicklePersistence,
-    filters,
-)
+from telegram.ext import ApplicationBuilder, PicklePersistence
 
 from config import settings
-from constants.keyboards import Buttons
-from constants.states import States
-from handlers import (
-    counter_increase,
-    make_report,
-    show_schedule,
-    start,
-    start_handler,
-    wait_for_new_report,
-)
+from handlers.main_handlers import main_handler
+from handlers.notifications import add_pay_notifications, notification_handler
 from persistence import RedisPersistence
 
 
@@ -39,38 +24,8 @@ def main():
         .persistence(persistence)
         .build()
     )
-    main_handler = ConversationHandler(
-        entry_points=[start_handler],
-        persistent=True,
-        name="main_handler",
-        states={
-            States.PERMISSION_DENIED: [
-                CallbackQueryHandler(
-                    start, pattern="^" + str(Buttons.RELOAD.name) + "$"
-                ),
-            ],
-            States.WAITING_FOR_FILE: [
-                MessageHandler(filters.Document.ALL, make_report)
-            ],
-            States.CHECK_FILE: [
-                CallbackQueryHandler(
-                    counter_increase, pattern="^" + str(Buttons.YES.name) + "$"
-                ),
-                CallbackQueryHandler(
-                    wait_for_new_report,
-                    pattern="^" + str(Buttons.NO.name) + "$",
-                ),
-            ],
-            States.ADMINS_MENU: [],
-            States.SCHEDULE: [
-                CallbackQueryHandler(
-                    show_schedule,
-                ),
-            ],
-        },
-        fallbacks=[start_handler],
-    )
-    app.add_handler(main_handler)
+    add_pay_notifications(app)
+    app.add_handlers([main_handler, notification_handler])
     app.run_polling()
 
 

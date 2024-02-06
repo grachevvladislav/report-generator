@@ -8,13 +8,15 @@ packages = [{include = "report_generator"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-python-telegram-bot = "^20.7"
+python-telegram-bot = {extras = ["job-queue"], version = "^20.7"}
 python-dotenv = "^1.0.0"
 google-api-python-client = "^2.111.0"
 borb = "^2.1.20"
 pydantic = {extras = ["email"], version = "^1.10.8"}
 pandas = "^2.1.4"
 redis = "^5.0.1"
+bs4 = "^0.0.2"
+lxml = "^5.1.0"
 
 
 [tool.poetry.group.dev.dependencies]
