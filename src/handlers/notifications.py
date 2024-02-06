@@ -71,7 +71,7 @@ notification_handler = ConversationHandler(
     ],
     fallbacks=[],
     persistent=True,
-    name="main_handler",
+    name="notification_handler",
     per_message=True,
     states={
         States.WAITING_FOR_PAYMENT.name: [
