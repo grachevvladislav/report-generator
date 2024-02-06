@@ -1,0 +1,10 @@
+TELEGRAM_TOKEN=your_token
+BOT_SETTINGS_URL=google_sheet_url
+SCHEDULE_URL=google_sheet_url
+REDIS_HOST=redis_ip
+REDIS_PORT=6379
+IMAP_SSL_HOST=imap.mail.ru
+IMAP_USERNAME=your_email@your_domain.ru
+IMAP_PASSWORD=your_password
+IMAP_FROM_EMAIL=your_email_sender
+INTERVAL=interval_in_second

@@ -21,6 +21,8 @@ def main():
     app = (
         ApplicationBuilder()
         .token(settings.telegram_token.get_secret_value())
+        .read_timeout(30)
+        .write_timeout(30)
         .persistence(persistence)
         .build()
     )
