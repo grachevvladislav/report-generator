@@ -71,15 +71,16 @@ main_handler = ConversationHandler(
     states={
         States.PERMISSION_DENIED: [
             CallbackQueryHandler(
-                start, pattern=PATTERN.format(Buttons.RELOAD)
+                start, pattern=PATTERN.format(Buttons.RELOAD.name)
             ),
         ],
         States.STUFF_MENU: [
             CallbackQueryHandler(
-                show_schedule, pattern=PATTERN.format(Buttons.SCHEDULE)
+                show_schedule, pattern=PATTERN.format(Buttons.SCHEDULE.name)
             ),
             CallbackQueryHandler(
-                wait_for_file, pattern=PATTERN.format(Buttons.CREATE_REPORT)
+                wait_for_file,
+                pattern=PATTERN.format(Buttons.CREATE_REPORT.name),
             ),
         ],
         States.WAITING_FOR_FILE: [
@@ -87,10 +88,10 @@ main_handler = ConversationHandler(
         ],
         States.CHECK_FILE: [
             CallbackQueryHandler(
-                counter_increase, pattern=PATTERN.format(Buttons.YES)
+                counter_increase, pattern=PATTERN.format(Buttons.YES.name)
             ),
             CallbackQueryHandler(
-                wait_for_new_report, pattern=PATTERN.format(Buttons.NO)
+                wait_for_new_report, pattern=PATTERN.format(Buttons.NO.name)
             ),
         ],
         States.SCHEDULE: [
