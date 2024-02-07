@@ -1,5 +1,7 @@
 from constants.exceptions import ParseFail
 
+PATTERN = "^{0}$"
+
 
 def surname_and_initials(fio: str) -> str:
     full_name = fio.split(" ")
@@ -11,5 +13,5 @@ def surname_and_initials(fio: str) -> str:
 def key_name_generator(name: str) -> str:
     fio_items = name.split(" ")
     if len(fio_items) < 2:
-        fio_items.append("")
+        fio_items.append(" ")
     return f"{fio_items[0]} {fio_items[1][0]}."

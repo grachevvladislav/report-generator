@@ -23,6 +23,9 @@ class Buttons(str, enum.Enum):
     CHECK_IS_READY = "Чек готов"
     CONFIRMATION = "Подтвердить?"
 
+    SCHEDULE = "Расписание"
+    CREATE_REPORT = "Создать отчёт"
+
 
 confirm_keyboard = keyboard_generator(
     [
@@ -41,4 +44,11 @@ closing_confirmation_keyboard = keyboard_generator(
 
 close_check_keyboard = keyboard_generator(
     [[Buttons.CHECK_IS_READY.value, Buttons.CHECK_IS_READY.name]]
+)
+
+stuff_menu_keyboard = keyboard_generator(
+    [
+        [Buttons.SCHEDULE.value, Buttons.SCHEDULE.name],
+        [Buttons.CREATE_REPORT.value, Buttons.CREATE_REPORT.name],
+    ]
 )

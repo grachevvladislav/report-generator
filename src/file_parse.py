@@ -1,6 +1,4 @@
-import datetime
 import io
-from calendar import monthrange
 
 import pandas as pd
 from borb.pdf import PDF, Document
@@ -56,14 +54,6 @@ def report_parsing(binary_file: bytearray, constants: dict) -> Employees:
 
 def create_pdf(employees: Employees, constants: dict) -> io.BytesIO:
     doc = Document()
-    constants["date"] = datetime.datetime.today().strftime("%d.%m.%Y")
-    constants["from"] = f"1.{constants['last_month'].strftime('%m.%Y')}г."
-    last_day_of_month = monthrange(
-        constants["last_month"].year, constants["last_month"].month
-    )[1]
-    constants[
-        "to"
-    ] = f"{last_day_of_month}.{constants['last_month'].strftime('%m.%Y')}г."
     for employee in employees.get_active_employee():
         constants["document_counter"] += 1
         employee_dict = employee.to_dict()

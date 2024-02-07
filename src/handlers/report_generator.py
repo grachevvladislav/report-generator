@@ -6,7 +6,7 @@ from google_sheet_backend import get_settings_sheets, update_document_counter
 
 
 async def counter_increase(update, context):
-    update_document_counter(context.user_data)
+    update_document_counter(context.bot_data)
     query = update.callback_query
     await query.answer()
     await query.edit_message_text(
@@ -23,14 +23,14 @@ async def wait_for_new_report(update, context):
 
 
 async def make_report(update, context):
-    context.user_data.update(get_settings_sheets())
+    context.bot_data.update(get_settings_sheets())
     file = await update.message.document.get_file()
     binary_file = await file.download_as_bytearray()
     await update.message.reply_text("Данные обрабатываются ⏳")
 
     try:
-        employees = report_parsing(binary_file, context.user_data)
-        pdf_file = create_pdf(employees, context.user_data)
+        employees = report_parsing(binary_file, context.bot_data)
+        pdf_file = create_pdf(employees, context.bot_data)
     except ParseFail as e:
         await update.message.reply_text(f"Парсинг файла:\n\n{e}")
     except AdminFail as e:
@@ -42,7 +42,7 @@ async def make_report(update, context):
     else:
         await update.message.reply_document(
             pdf_file,
-            filename=f"{context.user_data['last_month'].strftime('%B %Y')}.pdf",
+            filename=f"{context.bot_data['date']}.pdf",
         )
         await update.message.reply_text(
             "\n\n".join(employees.notification) + "Документы верны?",

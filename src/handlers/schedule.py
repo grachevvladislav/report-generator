@@ -9,18 +9,21 @@ async def show_schedule(update, context):
         data_delta = query.data
     else:
         data_delta = None
-    schedule, buttons = get_admin_schedule(
-        context.user_data["admins_dict"][str(update.effective_chat["id"])],
-        data_delta,
-    )
+    if str(update.effective_chat["id"]) in context.bot_data["stuff_ids"]:
+        employee = None
+    else:
+        employee = context.bot_data["admins_dict"][
+            str(update.effective_chat["id"])
+        ]
+    schedule, buttons = get_admin_schedule(employee, data_delta)
     if update.message:
         await update.message.reply_text(
-            "\n".join(schedule),
+            schedule,
             reply_markup=keyboard_generator(buttons),
         )
     else:
         await query.edit_message_text(
-            "\n".join(schedule),
+            schedule,
             reply_markup=keyboard_generator(buttons),
         )
     return States.SCHEDULE

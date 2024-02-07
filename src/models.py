@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from constants.exceptions import InnerFail
 from utils import key_name_generator
 
@@ -119,3 +121,41 @@ class Employees:
                         else:
                             new_value[dict_key] = dict_value
                 setattr(self.dict[key_name], key, new_value)
+
+
+class WorkingDay:
+    """Admins working day."""
+
+    def __init__(self, date=None, fio=None, delimiter=False):
+        """Init method."""
+        self.date: datetime = date
+        self.fio: str = fio
+        self.delimiter: bool = delimiter
+
+    def _complete_symbol(self, date: datetime) -> str:
+        if date > self.date:
+            return "✅"
+        else:
+            return "☑️"
+
+    def full_string(self, date: datetime, full: bool = True) -> str:
+        """Return all info in string."""
+        if self.delimiter:
+            return "----\n"
+        elif full:
+            return " ".join(
+                [
+                    self._complete_symbol(date),
+                    self.date.strftime("%d %B"),
+                    key_name_generator(self.fio),
+                    "\n",
+                ]
+            )
+        else:
+            return " ".join(
+                [
+                    self._complete_symbol(date),
+                    self.date.strftime("%d %B"),
+                    "\n",
+                ]
+            )

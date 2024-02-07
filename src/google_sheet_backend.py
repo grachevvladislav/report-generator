@@ -1,5 +1,6 @@
 import datetime
 import re
+from calendar import monthrange
 
 import dateutil
 
@@ -7,7 +8,7 @@ from config import settings
 from constants.constants import data_button_pattern, months
 from constants.exceptions import AdminFail, ParseFail
 from constants.roles import Roles
-from models import Employees
+from models import Employees, WorkingDay
 from services import service
 from utils import key_name_generator
 
@@ -63,6 +64,7 @@ def get_settings_sheets() -> dict:
     last_month = datetime.datetime.now()
     if not settings.debug:
         last_month += dateutil.relativedelta.relativedelta(months=-1)
+    last_day_of_month = monthrange(last_month.year, last_month.month)[1]
     constants = {
         "default_working_time": float(tables_dict["constants"][0][0]),
         "percentage_of_sales": float(tables_dict["constants"][0][1]),
@@ -72,7 +74,9 @@ def get_settings_sheets() -> dict:
         "customer_short": tables_dict["constants"][0][5],
         "default_classes": [x[6] for x in tables_dict["constants"]],
         "document_counter": int(tables_dict["document_counter"][0][0]),
-        "last_month": last_month,
+        "from": f"1.{last_month.strftime('%m.%Y')}г.",
+        "to": f"{last_day_of_month}.{last_month.strftime('%m.%Y')}г.",
+        "date": datetime.datetime.today().strftime("%d.%m.%Y"),
         "employees": tables_dict["employees"],
     }
     return constants
@@ -136,9 +140,9 @@ def get_admins_working_time(employees, constants):
             employees.set_attribute(day[1].strip(), admin_work_time=time)
 
 
-def get_admin_schedule(client_name, data_range=None) -> (list, list):
+def get_admin_schedule(employee_name=None, data_range=None) -> (list, list):
     now_date = datetime.datetime.today()
-    if re.match(r"^[0-9]{2}\.[0-9]{4}$", data_range):
+    if data_range and re.match(r"^[0-9]{2}\.[0-9]{4}$", data_range):
         data_range = datetime.datetime.strptime(
             data_range, data_button_pattern
         )
@@ -153,31 +157,40 @@ def get_admin_schedule(client_name, data_range=None) -> (list, list):
         )
         .execute()
     )
-    result = [f"Актуальный график на {months[data_range.month-1]}:"]
-    delimiter = "---"
+    working_days = []
     for day in raw_table["values"]:
-        if not len(day) > 1 or day[1] == "--":
+        if not len(day) > 1:
             continue
         try:
             db_date = datetime.datetime.strptime(day[0], "%d.%m.%Y")
         except ValueError:
             raise AdminFail(f'Ошибка в дате\n{" ".join(day)}')
-        if client_name == day[1] and db_date.month == data_range.month:
-            if now_date > db_date:
-                line = "✅ "
-            else:
-                line = "☑️ "
-            line += db_date.strftime("%d %B")
-            result.append(line)
-        elif not result[-1] == delimiter:
-            result.append(delimiter)
+
+        if db_date.month == data_range.month and (
+            not employee_name or employee_name == day[1]
+        ):
+            new_day = WorkingDay(date=db_date, fio=day[1])
+
+            if working_days and (
+                (
+                    working_days[-1].date + datetime.timedelta(days=1)
+                    < new_day.date
+                )
+                or working_days[-1].fio != new_day.fio
+            ):
+                working_days.append(WorkingDay(delimiter=True))
+            working_days.append(WorkingDay(date=db_date, fio=day[1]))
+
+    message = f"Актуальный график на {months[data_range.month - 1]}:\n\n"
+    for day in working_days:
+        message += day.full_string(date=now_date, full=not bool(employee_name))
     up = data_range + dateutil.relativedelta.relativedelta(months=1)
     down = data_range + dateutil.relativedelta.relativedelta(months=-1)
     buttons = [
         ["<- " + months[down.month - 1], down.strftime(data_button_pattern)],
         [months[up.month - 1] + " ->", up.strftime(data_button_pattern)],
     ]
-    return result, buttons
+    return message, buttons
 
 
 def update_document_counter(constants: dict) -> None:
