@@ -24,6 +24,8 @@ services:
     depends_on:
       - redis
     restart: always
+    volumes:
+      - ./inspired-alcove.json:./inspired-alcove.json
     env_file:
       - .env
 

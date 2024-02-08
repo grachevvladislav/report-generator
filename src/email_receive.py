@@ -1,6 +1,5 @@
 import email
 import imaplib
-import quopri
 import re
 from email.header import decode_header
 
@@ -13,25 +12,32 @@ from constants.exceptions import EmailFail
 def html_parser(message):
     data = {}
     soup = BeautifulSoup(message, features="lxml")
-    result = soup.find_all(
-        attrs=dict(
-            style=re.compile(
-                r"border-collapse:collapse;mso-table-lspace:0;"
-                r"mso-table-rspace:0;margin: 0px;"
-            )
-        )
+    body = soup.find(attrs={"style": "background: #ffffff; padding: 30px"})
+    table_in_div = body.find(
+        attrs={"style": "border-top: 1px solid #e2e8ef; padding: 20px 0 0"}
     )
-    pay_name = result[1].text.split(": ")
+    pay_name = (
+        table_in_div.find(string=re.compile("Назначение платежа"))
+        .findNext("div")
+        .text.split(": ")
+    )
     if len(pay_name) < 2:
         data["Название"] = "Не указано"
     else:
-        data["Название"] = (
-            result[1].text.split(": ")[1].replace("&#39", "").replace(";", "")
-        )
-    data["Дата"] = result[7].text
-    data["Сумма"] = result[9].text.replace("\xa0", "")
-    data["ID клиента"] = result[11].text
-    data["E-mail"] = result[13].text
+        data["Название"] = pay_name[1]
+    data["Дата"] = (
+        table_in_div.find(string=re.compile("Дата платежа")).findNext("p").text
+    )
+    data["ID клиента"] = (
+        table_in_div.find(string=re.compile("ID клиента")).findNext("p").text
+    )
+    data["E-mail"] = (
+        table_in_div.find(string=re.compile("E-mail")).findNext("p").text
+    )
+    summ_raw = body.find(attrs={"style": "padding: 20px 0"}).text
+    summ_start = summ_raw.find("сумму ") + 6
+    summ_end = summ_raw.find("RUB") + 3
+    data["Сумма"] = summ_raw[summ_start:summ_end].replace("\xa0", "")
     return data
 
 
@@ -58,20 +64,17 @@ def get_payments():
         imap.select("INBOX")
         _, raw_messages = imap.uid(
             "search",
-            "UNSEEN",
+            # "UNSEEN",
             "ALL",
         )
-        decoded_messages = raw_messages[0].decode("windows-1251").split(" ")
+        decoded_messages = raw_messages[0].decode("utf-8").split(" ")
         if decoded_messages[0]:
             for message in decoded_messages:
                 status, raw_letter = imap.uid("fetch", message, "(RFC822)")
                 if status == "OK":
                     message = email.message_from_bytes(raw_letter[0][1])
-                    quopri_decoded_message = quopri.decodestring(
-                        message.get_payload()
-                    ).decode(message.get_content_charset())
                     msg_from = from_subj_decode(message["From"])
                     if msg_from == settings.imap_from_email.get_secret_value():
-                        data = html_parser(quopri_decoded_message)
+                        data = html_parser(message.get_payload())
                         result.append(data)
     return result

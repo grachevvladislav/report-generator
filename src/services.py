@@ -6,8 +6,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive",
 ]
 
-
 credentials = Credentials.from_service_account_file(
-    filename="files/inspired-alcove.json", scopes=SCOPES
+    filename="inspired-alcove.json", scopes=SCOPES
 )
 service = discovery.build("sheets", "v4", credentials=credentials)
