@@ -8,5 +8,5 @@ RUN sed -i -e 's/# ru_RU.UTF-8 UTF-8/ru_RU.UTF-8 UTF-8/' /etc/locale.gen && \
 WORKDIR /app
 COPY src/ /app/src
 COPY files/ /app/files
-RUN pip3 install -r /appfiles/requirements.txt --no-cache-dir
+RUN pip3 install -r /app/requirements.txt --no-cache-dir
 CMD ["python", "/app/src/main.py" ]
