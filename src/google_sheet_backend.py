@@ -41,7 +41,7 @@ def get_cashier_id() -> str:
         .values()
         .get(
             spreadsheetId=settings.bot_settings_url.get_secret_value(),
-            range="constants!H2",
+            range="constants!G2",
         )
         .execute()["values"]
     )
@@ -69,10 +69,9 @@ def get_settings_sheets() -> dict:
         "default_working_time": float(tables_dict["constants"][0][0]),
         "percentage_of_sales": float(tables_dict["constants"][0][1]),
         "admin_by_hours": float(tables_dict["constants"][0][2]),
-        "trainer_by_hours": float(tables_dict["constants"][0][3]),
-        "customer_details": tables_dict["constants"][0][4],
-        "customer_short": tables_dict["constants"][0][5],
-        "default_classes": [x[6] for x in tables_dict["constants"]],
+        "customer_details": tables_dict["constants"][0][3],
+        "customer_short": tables_dict["constants"][0][4],
+        "default_classes": [x[5] for x in tables_dict["constants"]],
         "document_counter": int(tables_dict["document_counter"][0][0]),
         "from": f"1.{last_month.strftime('%m.%Y')}г.",
         "to": f"{last_day_of_month}.{last_month.strftime('%m.%Y')}г.",
