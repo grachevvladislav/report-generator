@@ -5,7 +5,8 @@ RUN apt-get update && \
     rm -r /var/lib/apt/lists/*
 RUN sed -i -e 's/# ru_RU.UTF-8 UTF-8/ru_RU.UTF-8 UTF-8/' /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales
-COPY src/ ./src
-COPY files/ ./files
-RUN pip3 install -r files/requirements.txt --no-cache-dir
-CMD ["python", "./src/main.py" ]
+WORKDIR /app
+COPY src/ /app/src
+COPY files/ /app/files
+RUN pip3 install -r /appfiles/requirements.txt --no-cache-dir
+CMD ["python", "/app/src/main.py" ]
