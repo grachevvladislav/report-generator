@@ -64,7 +64,7 @@ def get_payments():
         imap.select("INBOX")
         _, raw_messages = imap.uid(
             "search",
-            # "UNSEEN",
+            "UNSEEN",
             "ALL",
         )
         decoded_messages = raw_messages[0].decode("utf-8").split(" ")
