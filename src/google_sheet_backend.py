@@ -1,6 +1,5 @@
 import datetime
 import re
-from calendar import monthrange
 
 import dateutil
 
@@ -61,10 +60,6 @@ def get_settings_sheets() -> dict:
     )
     for table in tables_raw:
         tables_dict[table["range"].split("!")[0]] = table["values"]
-    last_month = datetime.datetime.now()
-    if not settings.debug:
-        last_month += dateutil.relativedelta.relativedelta(months=-1)
-    last_day_of_month = monthrange(last_month.year, last_month.month)[1]
     constants = {
         "default_working_time": float(tables_dict["constants"][0][0]),
         "percentage_of_sales": float(tables_dict["constants"][0][1]),
@@ -73,9 +68,6 @@ def get_settings_sheets() -> dict:
         "customer_short": tables_dict["constants"][0][4],
         "default_classes": [x[5] for x in tables_dict["constants"]],
         "document_counter": int(tables_dict["document_counter"][0][0]),
-        "from": f"1.{last_month.strftime('%m.%Y')}г.",
-        "to": f"{last_day_of_month}.{last_month.strftime('%m.%Y')}г.",
-        "date": datetime.datetime.today().strftime("%d.%m.%Y"),
         "employees": tables_dict["employees"],
     }
     return constants
@@ -108,7 +100,7 @@ def get_admins_working_time(employees, constants):
         .values()
         .get(
             spreadsheetId=settings.schedule_url.get_secret_value(),
-            range=f"{constants['last_month'].year}!A2:I900",
+            range=f"{constants['report_interval'].year}!A2:I900",
         )
         .execute()
     )
@@ -124,7 +116,7 @@ def get_admins_working_time(employees, constants):
         except ValueError:
             raise AdminFail(f'Ошибка в дате\n{" ".join(day)}')
         if (
-            day_date.month == constants["last_month"].month
+            day_date.month == constants["report_interval"].month
             and day_date.year == day_date.year
         ):
             if len(day) > 2:

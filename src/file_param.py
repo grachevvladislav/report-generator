@@ -1,3 +1,4 @@
+from calendar import monthrange
 from decimal import Decimal
 
 from borb.io.read.types import Decimal
@@ -24,11 +25,10 @@ def create_list(employee: dict) -> Page:
         .add(
             TableCell(
                 Paragraph(
-                    f"Акт №{employee['document_counter']} от " f"04.02.2024г. "
-                    # f"{employee['date']}. "
-                    f"За период с {employee['from']} по "
-                    # f"04.02.2024г.",
-                    f"{employee['to']}",
+                    f"Акт №{employee['document_counter']} от "
+                    f"04.02.2024г. "
+                    f"За период с 1.{employee['report_interval'].strftime('%m.%Y')}г. по "
+                    f"{monthrange(employee['report_interval'].year, employee['report_interval'].month)[1]}.{employee['report_interval'].strftime('%m.%Y')}г.",
                     font=custom_font,
                     font_size=Decimal(10),
                 ),
