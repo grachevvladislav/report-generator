@@ -2,17 +2,10 @@ import enum
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-
-def keyboard_generator(buttons):
-    result = [[]]
-    for button in buttons:
-        result[0].append(
-            InlineKeyboardButton(button[0], callback_data=button[1])
-        )
-    return InlineKeyboardMarkup(result)
+from constants.exceptions import InnerFail
 
 
-class Buttons(str, enum.Enum):
+class Buttons(enum.Enum):
     """Buttons."""
 
     YES = "Да"
@@ -25,30 +18,40 @@ class Buttons(str, enum.Enum):
 
     SCHEDULE = "Расписание"
     CREATE_REPORT = "Создать отчёт"
+    MENU = "В меню"
 
 
-confirm_keyboard = keyboard_generator(
-    [
-        [Buttons.YES.value, Buttons.YES.name],
-        [Buttons.NO.value, Buttons.NO.name],
-    ]
-)
+def keyboard_generator(list_of_lines: list[list[list | enum.Enum]]):
+    result = []
+    for line in list_of_lines:
+        line_result = []
+        for button in line:
+            if isinstance(button, Buttons):
+                line_result.append(
+                    InlineKeyboardButton(
+                        button.value, callback_data=button.name
+                    )
+                )
+            elif isinstance(button, list):
+                line_result.append(
+                    InlineKeyboardButton(button[0], callback_data=button[1])
+                )
+            else:
+                raise InnerFail(
+                    f"Не могу сделать кнопу из: '{button}'. Проверьте тип данных."
+                )
+        result.append(line_result)
+    return InlineKeyboardMarkup(result)
 
-start_keyboard = keyboard_generator(
-    [[Buttons.RELOAD.value, Buttons.RELOAD.name]]
-)
 
-closing_confirmation_keyboard = keyboard_generator(
-    [[Buttons.CONFIRMATION.value, Buttons.CONFIRMATION.name]]
-)
+confirm_keyboard = keyboard_generator([[Buttons.YES, Buttons.NO]])
 
-close_check_keyboard = keyboard_generator(
-    [[Buttons.CHECK_IS_READY.value, Buttons.CHECK_IS_READY.name]]
-)
+start_keyboard = keyboard_generator([[Buttons.RELOAD]])
+
+closing_confirmation_keyboard = keyboard_generator([[Buttons.CONFIRMATION]])
+
+close_check_keyboard = keyboard_generator([[Buttons.CHECK_IS_READY]])
 
 stuff_menu_keyboard = keyboard_generator(
-    [
-        [Buttons.SCHEDULE.value, Buttons.SCHEDULE.name],
-        [Buttons.CREATE_REPORT.value, Buttons.CREATE_REPORT.name],
-    ]
+    [[Buttons.SCHEDULE, Buttons.CREATE_REPORT]]
 )

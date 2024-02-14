@@ -1,10 +1,7 @@
 import datetime
-import re
-
-import dateutil
 
 from config import settings
-from constants.constants import data_button_pattern, months
+from constants.constants import months
 from constants.exceptions import AdminFail, ParseFail
 from constants.roles import Roles
 from models import Employees, WorkingDay
@@ -131,14 +128,10 @@ def get_admins_working_time(employees, constants):
             employees.set_attribute(day[1].strip(), admin_work_time=time)
 
 
-def get_admin_schedule(employee_name=None, data_range=None) -> (list, list):
+def get_admin_schedule(
+    data_range: datetime.datetime, employee_name: list = None
+) -> list:
     now_date = datetime.datetime.today()
-    if data_range and re.match(r"^[0-9]{2}\.[0-9]{4}$", data_range):
-        data_range = datetime.datetime.strptime(
-            data_range, data_button_pattern
-        )
-    else:
-        data_range = now_date
     raw_table = (
         service.spreadsheets()
         .values()
@@ -149,6 +142,11 @@ def get_admin_schedule(employee_name=None, data_range=None) -> (list, list):
         .execute()
     )
     working_days = []
+    message = (
+        f"Актуальный график на {months[data_range.month - 1]}.\n"
+        f"Обновлено "
+        f"{datetime.datetime.now().strftime('%d.%m.%Y %H:%M:%S')}\n\n"
+    )
     for day in raw_table["values"]:
         if not len(day) > 1:
             continue
@@ -161,7 +159,6 @@ def get_admin_schedule(employee_name=None, data_range=None) -> (list, list):
             not employee_name or employee_name == day[1]
         ):
             new_day = WorkingDay(date=db_date, fio=day[1])
-
             if working_days and (
                 (
                     working_days[-1].date + datetime.timedelta(days=1)
@@ -171,17 +168,9 @@ def get_admin_schedule(employee_name=None, data_range=None) -> (list, list):
             ):
                 working_days.append(WorkingDay(delimiter=True))
             working_days.append(WorkingDay(date=db_date, fio=day[1]))
-
-    message = f"Актуальный график на {months[data_range.month - 1]}:\n\n"
     for day in working_days:
         message += day.full_string(date=now_date, full=not bool(employee_name))
-    up = data_range + dateutil.relativedelta.relativedelta(months=1)
-    down = data_range + dateutil.relativedelta.relativedelta(months=-1)
-    buttons = [
-        ["<- " + months[down.month - 1], down.strftime(data_button_pattern)],
-        [months[up.month - 1] + " ->", up.strftime(data_button_pattern)],
-    ]
-    return message, buttons
+    return message
 
 
 def update_document_counter(constants: dict) -> None:

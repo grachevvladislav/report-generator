@@ -17,7 +17,7 @@ from handlers.report_generator import (
     wait_for_new_report,
 )
 from handlers.stuff import wait_for_file
-from utils import PATTERN
+from utils import PATTERN, send_or_edit_message
 
 from .schedule import show_schedule
 
@@ -28,7 +28,8 @@ async def start(update, context):
     if client_id in context.bot_data["admins_dict"].keys():
         return await show_schedule(update, context)
     elif client_id in context.bot_data["stuff_ids"]:
-        await update.message.reply_text(
+        await send_or_edit_message(
+            update,
             "Управление ботом:",
             reply_markup=stuff_menu_keyboard,
         )
@@ -97,6 +98,9 @@ main_handler = ConversationHandler(
         States.SCHEDULE: [
             CallbackQueryHandler(
                 show_schedule, pattern=PATTERN.format(r"[0-9]{2}\.[0-9]{4}")
+            ),
+            CallbackQueryHandler(
+                start, pattern=PATTERN.format(Buttons.MENU.name)
             ),
         ],
     },

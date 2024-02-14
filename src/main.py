@@ -26,7 +26,8 @@ def main():
         .persistence(persistence)
         .build()
     )
-    add_pay_notifications(app)
+    if settings.check_mail:
+        add_pay_notifications(app)
     app.add_handlers([main_handler, notification_handler])
     app.run_polling()
 

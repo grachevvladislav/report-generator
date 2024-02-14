@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     interval: SecretStr
 
     debug: bool = False
+    check_mail: bool = True
 
     class Config:
         """Env settings."""
