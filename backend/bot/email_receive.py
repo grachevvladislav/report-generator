@@ -3,10 +3,10 @@ import imaplib
 import re
 from email.header import decode_header
 
+from bot.constants.exceptions import EmailFail
 from bs4 import BeautifulSoup
 
-from config import settings
-from constants.exceptions import EmailFail
+from backend import settings
 
 
 def html_parser(message):

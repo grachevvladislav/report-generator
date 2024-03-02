@@ -1,4 +1,3 @@
-from calendar import monthrange
 from decimal import Decimal
 
 from borb.io.read.types import Decimal
@@ -11,10 +10,9 @@ from borb.pdf import (
     SingleColumnLayout,
     TableCell,
 )
-
-from constants.constants import custom_font
-from constants.exceptions import InnerFail
-from utils import surname_and_initials
+from bot.constants.constants import custom_font
+from bot.constants.exceptions import InnerFail
+from bot.utils import surname_and_initials
 
 
 def create_list(employee: dict) -> Page:
@@ -25,10 +23,9 @@ def create_list(employee: dict) -> Page:
         .add(
             TableCell(
                 Paragraph(
-                    f"Акт №{employee['document_counter']} от "
-                    f"04.02.2024г. "
-                    f"За период с 1.{employee['report_interval'].strftime('%m.%Y')}г. по "
-                    f"{monthrange(employee['report_interval'].year, employee['report_interval'].month)[1]}.{employee['report_interval'].strftime('%m.%Y')}г.",
+                    f"Акт №{employee['document_counter']} от {employee['date']}. "
+                    f"За период с {employee['from']} по {employee['to']}.",
+                    f"За период с {employee['from']} по {employee['to']}",
                     font=custom_font,
                     font_size=Decimal(10),
                 ),

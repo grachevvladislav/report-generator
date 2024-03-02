@@ -23,5 +23,7 @@ months = [
 ]
 
 data_button_pattern = "%m.%Y"
+BACK = r"back_to_"
+
 font_path = Path("files/Source Serif Pro.ttf")
 custom_font = TrueTypeFont.true_type_font_from_file(font_path)

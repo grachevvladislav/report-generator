@@ -1,14 +1,14 @@
-from telegram.ext import CallbackQueryHandler, ConversationHandler
-
-from config import settings
-from constants.keyboards import (
+from bot.constants.keyboards import (
     Buttons,
     close_check_keyboard,
     closing_confirmation_keyboard,
 )
-from constants.states import States
-from email_receive import get_payments
-from google_sheet_backend import get_cashier_id
+from bot.constants.states import States
+from bot.email_receive import get_payments
+from core.models import Employee
+from telegram.ext import CallbackQueryHandler, ConversationHandler
+
+from backend import settings
 
 
 async def send_payment(context):
@@ -29,17 +29,17 @@ async def send_payment(context):
 def add_pay_notifications(app):
     """Add a job to the queue."""
     job_queue = app.job_queue
-    chat_id = get_cashier_id()
-    jobs = job_queue.get_jobs_by_name(chat_id)
-    if jobs:
-        for job in jobs:
-            job.schedule_removal()
-    job_queue.run_repeating(
-        callback=send_payment,
-        interval=int(settings.interval.get_secret_value()),
-        chat_id=chat_id,
-        first=1,
-    )
+    for cashier in Employee.objects.filter(role=Employee.Role.CASHIR):
+        jobs = job_queue.get_jobs_by_name(cashier.telegram_id)
+        if jobs:
+            for job in jobs:
+                job.schedule_removal()
+        job_queue.run_repeating(
+            callback=send_payment,
+            interval=int(settings.INTERVAL),
+            chat_id=cashier.telegram_id,
+            first=1,
+        )
 
 
 async def close_check(update, context):

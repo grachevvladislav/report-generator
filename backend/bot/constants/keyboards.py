@@ -1,8 +1,7 @@
 import enum
 
+from bot.constants.exceptions import InnerFail
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
-from constants.exceptions import InnerFail
 
 
 class Buttons(enum.Enum):
@@ -18,7 +17,10 @@ class Buttons(enum.Enum):
 
     SCHEDULE = "Расписание"
     CREATE_REPORT = "Создать отчёт"
+
+    LOAD_DATA = "Загрузить"
     MENU = "В меню"
+    CREATE = "Создать"
 
 
 def keyboard_generator(list_of_lines: list[list[list | enum.Enum]]):

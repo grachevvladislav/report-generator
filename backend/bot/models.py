@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from constants.exceptions import InnerFail
-from utils import key_name_generator
+from bot.constants.exceptions import InnerFail
+from bot.utils import key_name_generator
 
 
 class Employee:

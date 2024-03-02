@@ -17,6 +17,9 @@ pandas = "^2.1.4"
 redis = "^5.0.1"
 bs4 = "^0.0.2"
 lxml = "^5.1.0"
+django = "^5.0.2"
+django-environ = "^0.11.2"
+psycopg2-binary = "^2.9.9"
 
 
 [tool.poetry.group.dev.dependencies]

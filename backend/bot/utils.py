@@ -1,4 +1,4 @@
-from constants.exceptions import ParseFail
+from bot.constants.exceptions import ParseFail
 
 PATTERN = "^{0}$"
 
