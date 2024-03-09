@@ -30,14 +30,14 @@ async def make_report(update, context):
     file = await update.message.document.get_file()
     binary_file = await file.download_as_bytearray()
     await update.message.reply_text("Данные обрабатываются ⏳")
-    constants = get_settings_sheets()
-    constants[
+    context.bot_data.update(get_settings_sheets())
+    context.bot_data[
         "report_interval"
     ] = datetime.now() + dateutil.relativedelta.relativedelta(months=-1)
 
     try:
-        employees = report_parsing(binary_file, constants)
-        pdf_file = create_pdf(employees, constants)
+        employees = report_parsing(binary_file, context.bot_data)
+        pdf_file = create_pdf(employees, context.bot_data)
     except ParseFail as e:
         await update.message.reply_text(f"Парсинг файла:\n\n{e}")
     except AdminFail as e:

@@ -1,3 +1,4 @@
+import datetime
 from calendar import monthrange
 from decimal import Decimal
 
@@ -26,7 +27,7 @@ def create_list(employee: dict) -> Page:
             TableCell(
                 Paragraph(
                     f"Акт №{employee['document_counter']} от "
-                    f"{employee['date']}. "
+                    f"{datetime.datetime.today().strftime('%d.%m.%Y')}. "
                     f"За период с 1.{employee['report_interval'].strftime('%m.%Y')}г. по "
                     f"{monthrange(employee['report_interval'].year, employee['report_interval'].month)[1]}.{employee['report_interval'].strftime('%m.%Y')}г.",
                     font=custom_font,
