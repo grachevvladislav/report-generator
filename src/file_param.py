@@ -26,7 +26,7 @@ def create_list(employee: dict) -> Page:
             TableCell(
                 Paragraph(
                     f"Акт №{employee['document_counter']} от "
-                    f"04.02.2024г. "
+                    f"{employee['date']}. "
                     f"За период с 1.{employee['report_interval'].strftime('%m.%Y')}г. по "
                     f"{monthrange(employee['report_interval'].year, employee['report_interval'].month)[1]}.{employee['report_interval'].strftime('%m.%Y')}г.",
                     font=custom_font,
@@ -41,21 +41,42 @@ def create_list(employee: dict) -> Page:
             Decimal(2), Decimal(2), Decimal(2), Decimal(2)
         )
     )
-
-    layout.add(
-        Paragraph(
-            f"Исполнитель: СЗ {employee['fio']}, {employee['inn']}, "
-            f"{employee['address']}, р/с {employee['checking_account']}, "
-            f"{employee['bank']}, {employee['bik']}, к/с "
-            f"{employee['correspondent_account']}\n\nЗаказчик: "
-            f"{employee['customer_details']}\n\nОснование: договор "
-            f"возмездного оказания услуг №{employee['agreement_number']} от "
-            f"{employee['agreement_date']}.",
-            font=custom_font,
-            font_size=Decimal(10),
-            respect_newlines_in_text=True,
+    if employee["tax"] == "СЗ":
+        layout.add(
+            Paragraph(
+                f"Исполнитель: СЗ {employee['fio']}, ИНН: "
+                f"{employee['inn']}, {employee['address']}, р/с "
+                f"{employee['checking_account']}, {employee['bank']}, "
+                f"{employee['bik']}, к/с {employee['correspondent_account']}\n"
+                f"\nЗаказчик: {employee['customer_details']}\n\nОснование: "
+                f"договор возмездного оказания услуг №"
+                f"{employee['agreement_number']} от "
+                f"{employee['agreement_date']}.",
+                font=custom_font,
+                font_size=Decimal(10),
+                respect_newlines_in_text=True,
+            )
         )
-    )
+    elif employee["tax"] == "ИП":
+        layout.add(
+            Paragraph(
+                f"Исполнитель: ИП {employee['fio']}, ОГРНИП: "
+                f"{employee['ogrnip']}, ИНН: {employee['inn']}, "
+                f"{employee['address']}, р/с {employee['checking_account']}, "
+                f"{employee['bank']}, {employee['bik']}, к/с "
+                f"{employee['correspondent_account']}\n\nЗаказчик: "
+                f"{employee['customer_details']}\n\nОснование: договор "
+                f"возмездного оказания услуг №{employee['agreement_number']} от"
+                f" {employee['agreement_date']}.",
+                font=custom_font,
+                font_size=Decimal(10),
+                respect_newlines_in_text=True,
+            )
+        )
+    else:
+        raise InnerFail(
+            "Неизвестный режим налогооблажения: " + employee["tax"]
+        )
     if employee["role"] == "Администратор":
         summ = str(
             (employee["admin_money"] * employee["percentage_of_sales"] / 100)

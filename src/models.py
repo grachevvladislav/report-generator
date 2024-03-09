@@ -10,7 +10,9 @@ class Employee:
     def __init__(
         self,
         fio: str = "",
+        tax: str = "",
         inn: str = "",
+        ogrnip: str = "",
         address: str = "",
         checking_account: str = "",
         bank: str = "",
@@ -27,7 +29,9 @@ class Employee:
     ):
         """Init method."""
         self.fio: str = fio
+        self.tax: str = tax
         self.inn: str = inn
+        self.ogrnip: str = ogrnip
         self.address: str = address
         self.checking_account: str = checking_account
         self.bank: str = bank
@@ -99,14 +103,14 @@ class Employees:
                 if isinstance(old_value, float):
                     if not isinstance(new_value, float):
                         raise InnerFail(
-                            f"Нельзя складывать разные типы данных:\n"
+                            f"Нельзя складывать разные типы данных: \n"
                             f"{old_value} + {new_value}"
                         )
                     new_value += old_value
                 elif isinstance(old_value, dict):
                     if not isinstance(new_value, dict):
                         raise InnerFail(
-                            f"Нельзя складывать разные типы данных:\n"
+                            f"Нельзя складывать разные типы данных: \n"
                             f"{old_value} + {new_value}"
                         )
                     for dict_key, dict_value in old_value.items():
@@ -115,7 +119,7 @@ class Employees:
                                 new_value[dict_key] += dict_value
                             except TypeError:
                                 raise InnerFail(
-                                    f"Нельзя складывать разные типы данных:\n"
+                                    f"Нельзя складывать разные типы данных: \n"
                                     f"{dict_value} + {new_value[dict_key]}"
                                 )
                         else:

@@ -24,10 +24,10 @@ def get_user_permissions() -> dict:
         "admins_dict": {},
     }
     for line in table_raw:
-        if line[10] == Roles.STUFF.value and line[11] == "Да":
-            constants["stuff_ids"].append(line[9])
-        elif line[10] == Roles.ADMINISTRATOR.value and line[11] == "Да":
-            constants["admins_dict"][line[9]] = line[0]
+        if line[12] == Roles.STUFF.value and line[13] == "Да":
+            constants["stuff_ids"].append(line[11])
+        elif line[12] == Roles.ADMINISTRATOR.value and line[13] == "Да":
+            constants["admins_dict"][line[11]] = line[0]
     return constants
 
 
@@ -74,12 +74,12 @@ def get_employees_info(data: dict, mode: str) -> Employees:
     employees = Employees()
     keys = data[0]
     for line in data[1:]:
-        if not len(line) == 12:
+        if not len(line) == 14:
             raise ParseFail(f'Ошибка в строке\n{" ".join(line)}')
-        if line[11] == "Нет" or mode != line[10]:
+        if line[13] == "Нет" or mode != line[12]:
             continue
         employees.set_attribute(
-            line[0], is_for_report=True, **dict(zip(keys, line[:11]))
+            line[0], is_for_report=True, **dict(zip(keys, line[:13]))
         )
     return employees
 

@@ -56,6 +56,7 @@ def create_pdf(employees: Employees, constants: dict) -> io.BytesIO:
     doc = Document()
     for employee in employees.get_active_employee():
         constants["document_counter"] += 1
+        print(employee.role)
         employee_dict = employee.to_dict()
         employee_dict.update(constants)
         page = create_list(employee_dict)
