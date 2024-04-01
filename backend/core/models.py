@@ -11,7 +11,13 @@ from .constants import (
 class Default(models.Model):
     """Default model."""
 
-    work_time = models.FloatField("Рабочее время поумолчанию")
+    class Meta:
+        """Default metaclass."""
+
+        verbose_name = "Настройка"
+        verbose_name_plural = "Настройки"
+
+    work_time = models.FloatField("Рабочее время по умолчанию")
     sale_kpi = models.FloatField("Процент от продаж")
     hourly_rate = models.FloatField("Часовая ставка")
 
@@ -25,6 +31,12 @@ class Default(models.Model):
 
 class ActivitieType(models.Model):
     """ActivitieType model."""
+
+    class Meta:
+        """ActivitieType metaclass."""
+
+        verbose_name = "Начисление"
+        verbose_name_plural = "Начисления зарплаты"
 
     name = models.CharField("Автодействие", blank=True, null=True, unique=True)
     salary = models.IntegerField("Сумма")
@@ -43,6 +55,12 @@ class ActivitieType(models.Model):
 
 class Employee(models.Model):
     """Employee model."""
+
+    class Meta:
+        """Employee metaclass."""
+
+        verbose_name = "Сотрудник"
+        verbose_name_plural = "Сотрудники"
 
     class TaxRegime(models.TextChoices):
         """Types of tax regime."""
@@ -132,6 +150,9 @@ class Employee(models.Model):
                 f"{self.correspondent_account}"
             )
 
+    def __str__(self):
+        return self.full_name
+
     def clean(self):
         """Clean data."""
         if (
@@ -165,11 +186,44 @@ class Employee(models.Model):
 class Document(models.Model):
     """Document model."""
 
-    Number = models.IntegerField("Номер последнего документа", unique=True)
+    class Meta:
+        """Document metaclass."""
+
+        verbose_name = "Отчет"
+        verbose_name_plural = "Отчеты"
+
+    number = models.IntegerField("Номер последнего документа", unique=True)
     start_date = models.DateField("Начало отчётного периода")
     end_date = models.DateField(
         "Конец отчётного периода", blank=True, null=True
     )
     employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, related_name="employee"
+        Employee, on_delete=models.CASCADE, related_name="document"
     )
+
+
+class Schedule(models.Model):
+    """Schedule model."""
+
+    class Meta:
+        """Schedule metaclass."""
+
+        verbose_name = "Запись"
+        verbose_name_plural = "Расписание"
+
+    date = models.DateField("Дата")
+    employee = models.ForeignKey(
+        Employee, on_delete=models.CASCADE, related_name="schedule"
+    )
+    time = models.FloatField(
+        "Рабочее время", blank=True, null=True, default=None
+    )
+
+    def __str__(self):
+        return " ".join(
+            [
+                self.date.strftime("%d %B %Y"),
+                self.employee.full_name,
+                str(self.time),
+            ]
+        )
