@@ -70,13 +70,13 @@ def get_settings_sheets() -> dict:
     return constants
 
 
-def get_employees_info(data: dict, mode: str) -> Employees:
+def get_employees_info(data: dict, mode: list[str]) -> Employees:
     employees = Employees()
     keys = data[0]
     for line in data[1:]:
         if not len(line) == 14:
             raise ParseFail(f'Ошибка в строке\n{" ".join(line)}')
-        if line[13] == "Нет" or mode != line[12]:
+        if line[13] == "Нет" or line[12] not in mode:
             continue
         employees.set_attribute(
             line[0], is_for_report=True, **dict(zip(keys, line[:13]))

@@ -83,6 +83,10 @@ main_handler = ConversationHandler(
                 wait_for_file,
                 pattern=PATTERN.format(Buttons.CREATE_REPORT.name),
             ),
+            CallbackQueryHandler(
+                make_report,
+                pattern=PATTERN.format(Buttons.CREATE_REPORT_DB.name),
+            ),
         ],
         States.WAITING_FOR_FILE: [
             MessageHandler(filters.Document.ALL, make_report)

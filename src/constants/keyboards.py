@@ -18,6 +18,7 @@ class Buttons(enum.Enum):
 
     SCHEDULE = "Расписание"
     CREATE_REPORT = "Создать отчёт"
+    CREATE_REPORT_DB = "Создать отчёт из базы"
     MENU = "В меню"
 
 
@@ -53,5 +54,10 @@ closing_confirmation_keyboard = keyboard_generator([[Buttons.CONFIRMATION]])
 close_check_keyboard = keyboard_generator([[Buttons.CHECK_IS_READY]])
 
 stuff_menu_keyboard = keyboard_generator(
-    [[Buttons.SCHEDULE, Buttons.CREATE_REPORT]]
+    [
+        [Buttons.SCHEDULE, Buttons.CREATE_REPORT],
+        [
+            Buttons.CREATE_REPORT_DB,
+        ],
+    ]
 )

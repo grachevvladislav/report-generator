@@ -28,7 +28,12 @@ def report_parsing(binary_file: bytearray, constants: dict) -> Employees:
         mode = Roles.TRAINER.value
     else:
         raise ParseFail("Неизвестный вид отчета. Нет обязательных полей.")
-    employees = get_employees_info(constants["employees"], mode)
+    employees = get_employees_info(
+        constants["employees"],
+        [
+            mode,
+        ],
+    )
     if mode == Roles.ADMINISTRATOR.value:
         get_admins_working_time(employees, constants)
         fields = role_fields[mode]
