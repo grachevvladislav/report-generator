@@ -2,6 +2,7 @@ import locale
 from pathlib import Path
 
 import environ
+from borb.pdf.canvas.font.simple_font.true_type_font import TrueTypeFont
 from dotenv import find_dotenv
 
 env = environ.Env()
@@ -99,9 +100,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 locale.setlocale(locale.LC_TIME, "ru_RU.UTF-8")
 
 TELEGRAM_TOKEN = env.str("TELEGRAM_TOKEN")
-CHECK_MAIL = env.str("CHECK_MAIL", True)
+CHECK_MAIL = env.str("CHECK_MAIL", False)
 INTERVAL = env.int("INTERVAL", 60)
 
 SITE_URL = env.str("SITE_URL")
 SITE_NAME = env.str("SITE_NAME")
 SITE_PASSWORD = env.str("SITE_PASSWORD")
+
+CUSTOM_FONT = TrueTypeFont.true_type_font_from_file(
+    Path("files/Source Serif Pro.ttf")
+)

@@ -24,3 +24,4 @@ cz_required_fields = [
     "correspondent_account",
 ]
 cashir_required_fields = ["telegram_id"]
+stuff_required_fields = ["name"]

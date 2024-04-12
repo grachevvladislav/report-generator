@@ -1,17 +1,19 @@
 import io
 
 import pandas as pd
-from borb.pdf import PDF, Document
-from constants.constants import role_fields
 from constants.exceptions import ParseFail
 from constants.roles import Roles
-from file_param import create_list
 from google_sheet_backend import (
     get_admins_working_time,
     get_employees_info,
     set_default_classes,
 )
 from models import Employees
+
+role_fields = {
+    "Администратор": ["Оплачено,\xa0₽", "Инициатор"],
+    "Тренер": ["Сумма", "Автодействие", "Комментарий", "Сотрудник"],
+}
 
 
 def report_parsing(binary_file: bytearray, constants: dict) -> Employees:
@@ -49,18 +51,3 @@ def report_parsing(binary_file: bytearray, constants: dict) -> Employees:
                 conducted_classes={full_name + "$" + str(money): 1},
             )
     return employees
-
-
-def create_pdf(employees: Employees, constants: dict) -> io.BytesIO:
-    doc = Document()
-    for employee in employees.get_active_employee():
-        constants["document_counter"] += 1
-        employee_dict = employee.to_dict()
-        employee_dict.update(constants)
-        page = create_list(employee_dict)
-        doc.add_page(page)
-
-    memory_file = io.BytesIO()
-    PDF.dumps(memory_file, doc)
-    memory_file.seek(0)
-    return memory_file

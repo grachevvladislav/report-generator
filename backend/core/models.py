@@ -1,12 +1,16 @@
+import datetime
+
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.utils import ProgrammingError
 from django.forms.models import model_to_dict
 
 from .constants import (
     cashir_required_fields,
     cz_required_fields,
     ip_required_fields,
+    stuff_required_fields,
 )
 
 
@@ -16,8 +20,8 @@ class Default(models.Model):
     class Meta:
         """Default metaclass."""
 
-        verbose_name = "Настройка"
-        verbose_name_plural = "Настройки"
+        verbose_name = "настройка"
+        verbose_name_plural = "настройки"
 
     work_time = models.FloatField("Рабочее время по умолчанию")
     planning_horizon = models.IntegerField(
@@ -27,9 +31,9 @@ class Default(models.Model):
         ],
     )
 
-    def clean(self):
+    async def clean(self):
         """Clean data."""
-        if self.id is None and Default.objects.count() > 0:
+        if self.id is None and await Default.objects.acount() > 0:
             raise ValidationError(
                 "Может быть только одна запись с настройками!"
             )
@@ -37,7 +41,10 @@ class Default(models.Model):
     @classmethod
     def get_default(cls, key):
         """Get dict of default project settings."""
-        first_record = cls.objects.first()
+        try:
+            first_record = cls.objects.first()
+        except ProgrammingError:
+            return None
         if first_record:
             return model_to_dict(first_record)[key]
         else:
@@ -74,8 +81,8 @@ class Employee(models.Model):
     class Meta:
         """Employee metaclass."""
 
-        verbose_name = "Сотрудник"
-        verbose_name_plural = "Сотрудники"
+        verbose_name = "сотрудник"
+        verbose_name_plural = "сотрудники"
 
     class TaxRegime(models.TextChoices):
         """Types of tax regime."""
@@ -137,7 +144,6 @@ class Employee(models.Model):
         max_length=13, choices=Role.choices, default=Role.TRAINER
     )
     is_active = models.BooleanField(default=True)
-    is_approved = models.BooleanField(default=False)
 
     @property
     def full_name(self):
@@ -145,6 +151,11 @@ class Employee(models.Model):
         return " ".join(
             filter(None, [self.surname, self.name, self.patronymic])
         )
+
+    @property
+    def key_name(self) -> str:
+        """Key name for documents."""
+        return f"{self.surname} {self.name[0]}."
 
     @property
     def display_name(self):
@@ -197,6 +208,8 @@ class Employee(models.Model):
             required_fields = cz_required_fields
         elif self.role == self.Role.CASHIR:
             required_fields = cashir_required_fields
+        elif self.role == self.Role.STUFF:
+            required_fields = stuff_required_fields
         else:
             required_fields = []
         for field in required_fields:
@@ -265,3 +278,70 @@ class Schedule(models.Model):
                     str(self.time),
                 ]
             )
+
+    def _complete_symbol(self) -> str:
+        if datetime.datetime.today() > self.date:
+            return "✅"
+        else:
+            return "☑️"
+
+    def full_string(self, full: bool = True) -> str:
+        """Return all info in string."""
+        if full:
+            return " ".join(
+                [
+                    self._complete_symbol,
+                    self.date.strftime("%d %B"),
+                    self.employee.key_name,
+                    "\n",
+                ]
+            )
+        else:
+            return " ".join(
+                [
+                    self._complete_symbol,
+                    self.date.strftime("%d %B"),
+                    "\n",
+                ]
+            )
+
+
+class BotRequest(models.Model):
+    """Requests from users model."""
+
+    class Meta:
+        """Requests from users metaclass."""
+
+        verbose_name = "запрос"
+        verbose_name_plural = "запросы пользователей"
+
+    telegram_id = models.IntegerField("Telegram id", unique=True)
+    username = models.CharField("username")
+    first_name = models.CharField("Имя", blank=True, null=True)
+    last_name = models.CharField("Фамилия", blank=True, null=True)
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="bot_request",
+        blank=True,
+        null=True,
+        default=None,
+    )
+
+    @property
+    def full_name(self):
+        """Contact first name and last name."""
+        return f"{self.first_name or " - "} {self.last_name or " - "}"
+
+    def __str__(self):
+        """Str method."""
+        return self.full_name
+
+    def save(self, *args, **kwargs):
+        """Add telegram id to employee instance and remove request."""
+        if self.employee:
+            self.employee.telegram_id = self.telegram_id
+            self.employee.save()
+            self.delete()
+        else:
+            super().save(*args, **kwargs)

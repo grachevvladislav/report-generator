@@ -10,9 +10,10 @@ from borb.pdf import (
     SingleColumnLayout,
     TableCell,
 )
-from bot.constants.constants import custom_font
 from bot.constants.exceptions import InnerFail
 from bot.utils import surname_and_initials
+
+from backend.settings import CUSTOM_FONT
 
 
 def create_list(employee: dict) -> Page:
@@ -23,10 +24,11 @@ def create_list(employee: dict) -> Page:
         .add(
             TableCell(
                 Paragraph(
-                    f"Акт №{employee['document_counter']} от {employee['date']}. "
+                    f"Акт №{employee['document_counter']} от "
+                    f"{employee['date']}. "
                     f"За период с {employee['from']} по {employee['to']}.",
                     f"За период с {employee['from']} по {employee['to']}",
-                    font=custom_font,
+                    font=CUSTOM_FONT,
                     font_size=Decimal(10),
                 ),
                 border_top=False,
@@ -48,7 +50,7 @@ def create_list(employee: dict) -> Page:
             f"{employee['customer_details']}\n\nОснование: договор "
             f"возмездного оказания услуг №{employee['agreement_number']} от "
             f"{employee['agreement_date']}.",
-            font=custom_font,
+            font=CUSTOM_FONT,
             font_size=Decimal(10),
             respect_newlines_in_text=True,
         )
@@ -119,7 +121,7 @@ def create_list(employee: dict) -> Page:
                 TableCell(
                     Paragraph(
                         field,
-                        font=custom_font,
+                        font=CUSTOM_FONT,
                         font_size=Decimal(10),
                         text_alignment=Alignment.CENTERED,
                         horizontal_alignment=Alignment.CENTERED,
@@ -135,7 +137,7 @@ def create_list(employee: dict) -> Page:
                 TableCell(
                     Paragraph(
                         field,
-                        font=custom_font,
+                        font=CUSTOM_FONT,
                         font_size=Decimal(10),
                         text_alignment=Alignment.CENTERED,
                         horizontal_alignment=Alignment.CENTERED,
@@ -157,7 +159,7 @@ def create_list(employee: dict) -> Page:
             f"Всего к оказано услуг на сумму {summ} руб.\n\nВышеперечисленные "
             f"услуги выполнены полностью и в срок. Заказчик претензий по "
             f"объему, качеству, срокам оказания услуг не имеет.",
-            font=custom_font,
+            font=CUSTOM_FONT,
             font_size=Decimal(7),
             respect_newlines_in_text=True,
         )
@@ -179,7 +181,7 @@ def create_list(employee: dict) -> Page:
             TableCell(
                 Paragraph(
                     field,
-                    font=custom_font,
+                    font=CUSTOM_FONT,
                     font_size=Decimal(10),
                     padding_left=Decimal(30),
                     respect_newlines_in_text=True,
@@ -196,7 +198,7 @@ def create_list(employee: dict) -> Page:
             TableCell(
                 Paragraph(
                     field,
-                    font=custom_font,
+                    font=CUSTOM_FONT,
                     font_size=Decimal(10),
                     padding_left=Decimal(20),
                     respect_newlines_in_text=True,

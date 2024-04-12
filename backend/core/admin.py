@@ -9,7 +9,14 @@ from django.urls import path
 
 from .crud import export_all_tables, get_missing_dates
 from .filters import DateFilter, EmployeeScheduleFiler
-from .models import ActivitieType, Default, Document, Employee, Schedule
+from .models import (
+    ActivitieType,
+    BotRequest,
+    Default,
+    Document,
+    Employee,
+    Schedule,
+)
 from .utils import plural_days
 
 
@@ -20,11 +27,29 @@ class EmployeeAdmin(admin.ModelAdmin):
         "full_name",
         "tax_regime",
         "is_active",
-        "is_approved",
         "role",
     )
     search_fields = ("tax_regime",)
-    list_filter = ("is_active", "is_approved", "role")
+    list_filter = ("is_active", "role")
+
+
+class BotRequestAdmin(admin.ModelAdmin):
+    """BotRequest admin site."""
+
+    list_display = (
+        "full_name",
+        "username",
+        "telegram_id",
+    )
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Only administrators can be on the schedule."""
+        if db_field.name == "employee":
+            kwargs["queryset"] = Employee.objects.filter(
+                is_active=True,
+                telegram_id__isnull=True,
+            )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class ActivitieTypeAdmin(admin.ModelAdmin):
@@ -100,10 +125,10 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
     change_list_template = "change_list.html"
     change_form_template = "admin/change_form.html"
 
-    def insert_schedule(self, request):
+    async def insert_schedule(self, request):
         """Add schedule button."""
         if request.method == "POST":
-            Schedule.objects.bulk_create(
+            Schedule.objects.abulk_create(
                 [
                     Schedule(date=date)
                     for date in get_missing_dates(enable_empty=False)
@@ -115,7 +140,7 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
             context = {
                 **self.admin_site.each_context(request),
                 "title": "Вставить расписание",
-                "text": f"Добавить недостающие записи на {plural_days(Default.get_default('planning_horizon'))}?",
+                "text": f"Добавить недостающие записи на {plural_days(await Default.get_default('planning_horizon'))}?",
                 "title2": "Создаваемые записи",
                 "objects": get_missing_dates(enable_empty=False),
                 "opts": self.model._meta,
@@ -134,9 +159,9 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
         ]
         return custom_urls + urls
 
-    def changelist_view(self, request, extra_context=None):
+    async def achangelist_view(self, request, extra_context=None):
         """Add notice of deficiencies in next 30 day's planning."""
-        difference = get_missing_dates(enable_empty=True)
+        difference = await get_missing_dates(enable_empty=True)
         if difference:
             grouped_dates = []
             current_group = [difference[0]]
@@ -164,9 +189,9 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
         return super().changelist_view(request, extra_context=extra_context)
 
     @admin.action(description="Установить рабочее время по умолчанию")
-    def set_default_time(self, request, queryset):
+    async def set_default_time(self, request, queryset):
         """Set worktime from defaults."""
-        work_time = Default.get_default("work_time")
+        work_time = await Default.get_default("work_time")
         if not work_time:
             messages.error(request, "Время по умолчанию не указано!")
         else:
@@ -189,3 +214,4 @@ admin.site.register(Employee, EmployeeAdmin)
 admin.site.register(Default, DefaultAdmin)
 admin.site.register(Schedule, ScheduleAdmin)
 admin.site.register(Document, DocumentAdmin)
+admin.site.register(BotRequest, BotRequestAdmin)

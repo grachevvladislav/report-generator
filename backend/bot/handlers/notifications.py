@@ -26,10 +26,10 @@ async def send_payment(context):
     return States.WAITING_FOR_PAYMENT.name
 
 
-def add_pay_notifications(app):
+async def add_pay_notifications(app):
     """Add a job to the queue."""
     job_queue = app.job_queue
-    for cashier in Employee.objects.filter(role=Employee.Role.CASHIR):
+    for cashier in await Employee.objects.afilter(role=Employee.Role.CASHIR):
         jobs = job_queue.get_jobs_by_name(cashier.telegram_id)
         if jobs:
             for job in jobs:

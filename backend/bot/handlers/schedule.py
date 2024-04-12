@@ -2,15 +2,15 @@ import datetime
 import re
 
 import dateutil
-from constants.constants import data_button_pattern, months
-from constants.keyboards import Buttons, keyboard_generator
-from constants.states import States
-from google_sheet_backend import get_admin_schedule
-from utils import send_or_edit_message
+from bot.constants.constants import data_button_pattern, months
+from bot.constants.keyboards import Buttons, keyboard_generator
+from bot.constants.states import States
+from bot.google_sheet_backend import get_admin_schedule
+from bot.utils import send_or_edit_message
 
 
 async def show_schedule(update, context):
-    query = update.callback_query
+    query = await update.callback_query
     now_date = datetime.datetime.today()
     if query and query.data and re.match(r"^[0-9]{2}\.[0-9]{4}$", query.data):
         data_range = datetime.datetime.strptime(
