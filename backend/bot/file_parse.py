@@ -2,7 +2,6 @@ import io
 
 import pandas as pd
 from borb.pdf import PDF, Document
-
 from constants.constants import role_fields
 from constants.exceptions import ParseFail
 from constants.roles import Roles
