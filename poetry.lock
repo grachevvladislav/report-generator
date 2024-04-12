@@ -540,6 +540,21 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-admin-extra-buttons"
+version = "1.5.7"
+description = "Django mixin to easily add buttons to any ModelAdmin"
+optional = false
+python-versions = "*"
+files = [
+    {file = "django-admin-extra-buttons-1.5.7.tar.gz", hash = "sha256:08dd070cbd46dfe1cb46d7676495a943860e68f99bac85ab5b164cbeb5e73dae"},
+]
+
+[package.extras]
+dev = ["autopep8", "bump2version", "check-manifest", "django", "flake8", "isort", "pep8", "pip-tools", "readme", "sphinx", "wheel"]
+docs = ["markdown-include", "mdx_gh_links", "mkdocs", "mkdocs-material", "mkdocs-material"]
+test = ["coverage", "django_webtest", "factory-boy", "pdbpp", "pyquery", "pytest", "pytest-cov", "pytest-django", "pytest-echo", "tox (>=2.3)", "wheel"]
+
+[[package]]
 name = "django-environ"
 version = "0.11.2"
 description = "A package that allows you to utilize 12factor inspired environment variables to configure your Django application."
@@ -675,6 +690,17 @@ files = [
 [package.dependencies]
 dnspython = ">=2.0.0"
 idna = ">=2.0.0"
+
+[[package]]
+name = "et-xmlfile"
+version = "1.1.0"
+description = "An implementation of lxml.xmlfile for the standard library"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "et_xmlfile-1.1.0-py3-none-any.whl", hash = "sha256:a2ba85d1d6a74ef63837eed693bcb89c3f752169b0e3e7ae5b16ca5e1b3deada"},
+    {file = "et_xmlfile-1.1.0.tar.gz", hash = "sha256:8eb9e2bc2f8c97e37a2dc85a09ecdcdec9d8a396530a6d5a33b30b9a92da0c5c"},
+]
 
 [[package]]
 name = "fastjsonschema"
@@ -1299,6 +1325,20 @@ files = [
     {file = "numpy-1.26.2-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:fe6b44fb8fcdf7eda4ef4461b97b3f63c466b27ab151bec2366db8b197387841"},
     {file = "numpy-1.26.2.tar.gz", hash = "sha256:f65738447676ab5777f11e6bbbdb8ce11b785e105f690bc45966574816b6d3ea"},
 ]
+
+[[package]]
+name = "openpyxl"
+version = "3.1.2"
+description = "A Python library to read/write Excel 2010 xlsx/xlsm files"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "openpyxl-3.1.2-py2.py3-none-any.whl", hash = "sha256:f91456ead12ab3c6c2e9491cf33ba6d08357d802192379bb482f1033ade496f5"},
+    {file = "openpyxl-3.1.2.tar.gz", hash = "sha256:a6f5977418eff3b2d5500d54d9db50c8277a368436f4e4f8ddb1be3422870184"},
+]
+
+[package.dependencies]
+et-xmlfile = "*"
 
 [[package]]
 name = "packaging"
@@ -2478,4 +2518,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "23e5dda9447db99377a059828bb263929379309fcc0e34639acd39f4bd15db24"
+content-hash = "cd8c5086ba97fff49bff6ea24878e3b16d39a63f5bf917d38ee4b3b591bbcf58"

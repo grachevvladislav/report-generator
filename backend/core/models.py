@@ -1,5 +1,7 @@
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
+from django.forms.models import model_to_dict
 
 from .constants import (
     cashir_required_fields,
@@ -18,8 +20,12 @@ class Default(models.Model):
         verbose_name_plural = "Настройки"
 
     work_time = models.FloatField("Рабочее время по умолчанию")
-    sale_kpi = models.FloatField("Процент от продаж")
-    hourly_rate = models.FloatField("Часовая ставка")
+    planning_horizon = models.IntegerField(
+        "Горизонт планирования (дни)",
+        validators=[
+            MinValueValidator(1),
+        ],
+    )
 
     def clean(self):
         """Clean data."""
@@ -28,6 +34,15 @@ class Default(models.Model):
                 "Может быть только одна запись с настройками!"
             )
 
+    @classmethod
+    def get_default(cls, key):
+        """Get dict of default project settings."""
+        first_record = cls.objects.first()
+        if first_record:
+            return model_to_dict(first_record)[key]
+        else:
+            return None
+
 
 class ActivitieType(models.Model):
     """ActivitieType model."""
@@ -35,8 +50,8 @@ class ActivitieType(models.Model):
     class Meta:
         """ActivitieType metaclass."""
 
-        verbose_name = "Начисление"
-        verbose_name_plural = "Начисления зарплаты"
+        verbose_name = "начисление"
+        verbose_name_plural = "начисления зарплаты"
 
     name = models.CharField("Автодействие", blank=True, null=True, unique=True)
     salary = models.IntegerField("Сумма")
@@ -132,6 +147,14 @@ class Employee(models.Model):
         )
 
     @property
+    def display_name(self):
+        """Admin site display name."""
+        if self.is_active:
+            return self.full_name
+        else:
+            return " ".join([self.full_name, "⛔️"])
+
+    @property
     def full_value(self):
         """Full value for report."""
         if self.tax_regime == self.TaxRegime.CZ:
@@ -151,7 +174,7 @@ class Employee(models.Model):
             )
 
     def __str__(self):
-        return self.full_name
+        return self.display_name
 
     def clean(self):
         """Clean data."""
@@ -189,14 +212,12 @@ class Document(models.Model):
     class Meta:
         """Document metaclass."""
 
-        verbose_name = "Отчет"
-        verbose_name_plural = "Отчеты"
+        verbose_name = "отчет"
+        verbose_name_plural = "отчеты"
 
-    number = models.IntegerField("Номер последнего документа", unique=True)
+    number = models.IntegerField("Номер документа", unique=True)
     start_date = models.DateField("Начало отчётного периода")
-    end_date = models.DateField(
-        "Конец отчётного периода", blank=True, null=True
-    )
+    end_date = models.DateField("Конец отчётного периода")
     employee = models.ForeignKey(
         Employee, on_delete=models.CASCADE, related_name="document"
     )
@@ -208,22 +229,39 @@ class Schedule(models.Model):
     class Meta:
         """Schedule metaclass."""
 
-        verbose_name = "Запись"
-        verbose_name_plural = "Расписание"
+        verbose_name = "запись"
+        verbose_name_plural = "рабочий график"
 
     date = models.DateField("Дата")
     employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, related_name="schedule"
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="schedule",
+        blank=True,
+        null=True,
+        default=None,
     )
     time = models.FloatField(
-        "Рабочее время", blank=True, null=True, default=None
+        "Рабочее время",
+        blank=True,
+        null=True,
+        default=Default.get_default("work_time"),
     )
 
     def __str__(self):
-        return " ".join(
-            [
-                self.date.strftime("%d %B %Y"),
-                self.employee.full_name,
-                str(self.time),
-            ]
-        )
+        if self.employee:
+            return ", ".join(
+                [
+                    self.date.strftime("%d %B %Y"),
+                    self.employee.full_name,
+                    str(self.time),
+                ]
+            )
+        else:
+            return ", ".join(
+                [
+                    self.date.strftime("%d %B %Y"),
+                    "---------",
+                    str(self.time),
+                ]
+            )

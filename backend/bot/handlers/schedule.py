@@ -2,7 +2,6 @@ import datetime
 import re
 
 import dateutil
-
 from constants.constants import data_button_pattern, months
 from constants.keyboards import Buttons, keyboard_generator
 from constants.states import States
