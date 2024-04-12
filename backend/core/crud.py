@@ -1,9 +1,7 @@
 import datetime
 import io
 
-import openpyxl
-from django.apps import apps
-from django.db.models.fields.related import ForeignKey
+from django.core import management
 
 from .models import Default, Schedule
 from .utils import append_data
@@ -34,23 +32,7 @@ def get_missing_dates(enable_empty):
 
 
 def export_all_tables():
-    wb = openpyxl.Workbook()
-    buffer = io.BytesIO()
-    models = apps.get_app_config("core").get_models()
-    for model in models:
-        ws = wb.create_sheet(model.__name__)
-        fields = [field.name for field in model._meta.fields]
-        ws.append(fields)
-        for obj in model.objects.all():
-            line = []
-            for field in model._meta.fields:
-                value = getattr(obj, field.name)
-                if value and isinstance(field, ForeignKey):
-                    line.append(value.id)
-                else:
-                    line.append(value)
-            ws.append(line)
-    wb.remove_sheet(wb.worksheets[0])
-    wb.save(buffer)
+    buffer = io.StringIO()
+    management.call_command("dumpdata", stdout=buffer)
     buffer.seek(0)
     return buffer

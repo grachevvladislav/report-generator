@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from admin_extra_buttons.mixins import ExtraButtonsMixin
 from django.contrib import admin, messages
 from django.http import HttpResponse
@@ -52,8 +54,12 @@ class DefaultAdmin(ExtraButtonsMixin, admin.ModelAdmin):
         """Download backup file function."""
         messages.success(request, "Загрузка начата!")
         file = export_all_tables()
-        response = HttpResponse(file, content_type="application/vnd.ms-excel")
-        response["Content-Disposition"] = "inline; filename=" + "data.xlsx"
+        response = HttpResponse(file, content_type="application/json")
+        response["Content-Disposition"] = (
+            "attachment; filename=data_"
+            + datetime.today().strftime("%d.%m.%Y_%H:%M:%S")
+            + ".json"
+        )
         return response
 
     def get_urls(self):

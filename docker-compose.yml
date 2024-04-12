@@ -36,9 +36,20 @@ services:
 #    container_name: report-generator-bot
 #    depends_on:
 #      - redis
+#      - db
 #    restart: always
-#    volumes:
-#      - ./inspired-alcove.json:/app/inspired-alcove.json
+#    entrypoint: CMD python /app/backend/manage.py bot
+#    env_file:
+#      - .env
+
+#  django:
+#    image: grachevvladislav/report-generator:latest
+#    container_name: report-generator-django
+#    depends_on:
+#      - redis
+#      - db
+#    restart: always
+#    entrypoint: gunicorn notification_service.wsgi --bind 0.0.0.0:8000
 #    env_file:
 #      - .env
 
