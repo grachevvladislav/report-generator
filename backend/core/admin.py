@@ -1,6 +1,8 @@
+import asyncio
 from datetime import datetime
 
 from admin_extra_buttons.mixins import ExtraButtonsMixin
+from asgiref.sync import async_to_sync
 from django.contrib import admin, messages
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -120,18 +122,20 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
     list_editable = ("employee",)
     ordering = ("-date",)
     list_filter = (DateFilter, EmployeeScheduleFiler)
-    list_display = ("date", "employee", "time")
+    list_display = ("full_string_sync", "employee", "time")
 
     change_list_template = "change_list.html"
     change_form_template = "admin/change_form.html"
 
-    async def insert_schedule(self, request):
+    def insert_schedule(self, request):
         """Add schedule button."""
         if request.method == "POST":
-            Schedule.objects.abulk_create(
+            Schedule.objects.bulk_create(
                 [
                     Schedule(date=date)
-                    for date in get_missing_dates(enable_empty=False)
+                    for date in async_to_sync(get_missing_dates)(
+                        enable_empty=False
+                    )
                 ]
             )
             messages.success(request, "Записи добавлены!")
@@ -140,9 +144,11 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
             context = {
                 **self.admin_site.each_context(request),
                 "title": "Вставить расписание",
-                "text": f"Добавить недостающие записи на {plural_days(await Default.get_default('planning_horizon'))}?",
+                "text": f"Добавить недостающие записи на {plural_days(Default.get_default('planning_horizon'))}?",
                 "title2": "Создаваемые записи",
-                "objects": get_missing_dates(enable_empty=False),
+                "objects": async_to_sync(get_missing_dates)(
+                    enable_empty=False
+                ),
                 "opts": self.model._meta,
             }
             return TemplateResponse(request, "confirm.html", context)
@@ -159,9 +165,9 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
         ]
         return custom_urls + urls
 
-    async def achangelist_view(self, request, extra_context=None):
+    def changelist_view(self, request, extra_context=None):
         """Add notice of deficiencies in next 30 day's planning."""
-        difference = await get_missing_dates(enable_empty=True)
+        difference = asyncio.run(get_missing_dates(add_empty=True))
         if difference:
             grouped_dates = []
             current_group = [difference[0]]
@@ -189,9 +195,9 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
         return super().changelist_view(request, extra_context=extra_context)
 
     @admin.action(description="Установить рабочее время по умолчанию")
-    async def set_default_time(self, request, queryset):
+    def set_default_time(self, request, queryset):
         """Set worktime from defaults."""
-        work_time = await Default.get_default("work_time")
+        work_time = Default.get_default("work_time")
         if not work_time:
             messages.error(request, "Время по умолчанию не указано!")
         else:

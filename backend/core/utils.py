@@ -1,5 +1,7 @@
 import datetime
 
+from asgiref.sync import sync_to_async
+
 
 def append_data(date, *args, **kwargs):
     return date + datetime.timedelta(*args, **kwargs)
@@ -16,3 +18,8 @@ def plural_days(n):
             return " ".join([str(n), days[2]])
     else:
         return None
+
+
+@sync_to_async
+def get_related_object(obj, related):
+    return getattr(obj, related)

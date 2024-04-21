@@ -1,6 +1,8 @@
+import asyncio
 import datetime
 import io
 
+from asgiref.sync import sync_to_async
 from borb.pdf import PDF, Document
 from django.core import management
 
@@ -9,25 +11,48 @@ from .models import Default, Employee, Schedule
 from .utils import append_data
 
 
-async def get_missing_dates(enable_empty):
+async def get_missing_dates(add_empty):
     start_date = datetime.datetime.now().date()
-    db = await Schedule.objects.afilter(
-        date__range=[
-            start_date,
-            append_data(
-                start_date, days=Default.get_default("planning_horizon")
-            ),
-        ]
+    planning_horizon = await sync_to_async(Default.get_default)(
+        "planning_horizon"
     )
-    if enable_empty:
-        db = await db.afilter(employee__isnull=False)
-    db = await db.values_list("date", flat=True).distinct()
-    if len(db) < Default.get_default("planning_horizon"):
+
+    @sync_to_async
+    def tmp(add_empty):
+        if add_empty:
+            db = (
+                Schedule.objects.filter(
+                    date__range=[
+                        start_date,
+                        append_data(start_date, days=planning_horizon),
+                    ],
+                )
+                .values_list("date", flat=True)
+                .distinct()
+            )
+        else:
+            db = (
+                Schedule.objects.filter(
+                    date__range=[
+                        start_date,
+                        append_data(start_date, days=planning_horizon),
+                    ],
+                    employee__isnull=False,
+                )
+                .values_list("date", flat=True)
+                .distinct()
+            )
+        return db
+
+    db_list = await asyncio.gather(asyncio.create_task(tmp(add_empty)))
+    print(db_list)
+    # need to fix
+    if len(db_list[0]) < planning_horizon:
         all_days = [
             append_data(start_date, days=date)
-            for date in range(Default.get_default("planning_horizon"))
+            for date in range(planning_horizon)
         ]
-        difference = list(set(all_days) - set(db))
+        difference = list(set(all_days) - set(db_list[0]))
         difference.sort()
         return difference
     return []
@@ -38,6 +63,38 @@ def export_all_tables():
     management.call_command("dumpdata", stdout=buffer)
     buffer.seek(0)
     return buffer
+
+
+async def get_schedule(
+    data_range: datetime.datetime, employee: Employee = None
+) -> str:
+    now_date = datetime.datetime.now()
+    message = (
+        f"Актуальный график на {now_date.strftime('%b %Y')}.\n"
+        f"Обновлено "
+        f"{now_date.strftime('%d.%m.%Y %H:%M:%S')}\n\n"
+    )
+    if employee:
+        working_days = await sync_to_async(Schedule.objects.filter)(
+            date__month=data_range.month, employee=employee
+        )
+    else:
+        working_days = await sync_to_async(Schedule.objects.filter)(
+            date__month=data_range.month, employee__isnull=False
+        )
+    previous = None
+    async for day in working_days:
+        if previous and (
+            await previous.get_employee_name() != await day.get_employee_name()
+            or append_data(previous.date, days=1) != day.date
+        ):
+            message += "------------\n"
+        previous = day
+        message += await day.full_string(full=not employee)
+        message += "\n"
+    if not previous:
+        message += "Пока нет расписания на выбранный период"
+    return message
 
 
 def create_pdf(employees: list[Employee], constants: dict) -> io.BytesIO:

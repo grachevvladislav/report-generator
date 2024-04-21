@@ -1,16 +1,17 @@
 import datetime
 import re
 
-import dateutil
 from bot.constants.constants import data_button_pattern, months
 from bot.constants.keyboards import Buttons, keyboard_generator
 from bot.constants.states import States
-from bot.google_sheet_backend import get_admin_schedule
 from bot.utils import send_or_edit_message
+from core.crud import get_schedule
+from core.models import Employee
+from dateutil.relativedelta import relativedelta
 
 
 async def show_schedule(update, context):
-    query = await update.callback_query
+    query = update.callback_query
     now_date = datetime.datetime.today()
     if query and query.data and re.match(r"^[0-9]{2}\.[0-9]{4}$", query.data):
         data_range = datetime.datetime.strptime(
@@ -18,8 +19,8 @@ async def show_schedule(update, context):
         )
     else:
         data_range = now_date
-    up = data_range + dateutil.relativedelta.relativedelta(months=1)
-    down = data_range + dateutil.relativedelta.relativedelta(months=-1)
+    up = data_range + relativedelta(months=1)
+    down = data_range + relativedelta(months=-1)
     buttons = [
         [
             [
@@ -28,16 +29,18 @@ async def show_schedule(update, context):
             ],
             [months[up.month - 1] + " ->", up.strftime(data_button_pattern)],
         ],
-        [[Buttons.RELOAD.value, data_range.strftime(data_button_pattern)]],
+        [[Buttons.TODAY.value, now_date.strftime(data_button_pattern)]],
     ]
-    if str(update.effective_chat["id"]) in context.bot_data["stuff_ids"]:
-        employee = None
+    employee = await Employee.objects.aget(
+        telegram_id=update.effective_chat["id"]
+    )
+    if employee.role == Employee.Role.STUFF:
         buttons.append([Buttons.MENU])
+        message = await get_schedule(data_range)
+    elif employee.role == Employee.Role.ADMIN:
+        message = await get_schedule(data_range, employee)
     else:
-        employee = context.bot_data["admins_dict"][
-            str(update.effective_chat["id"])
-        ]
-    message = get_admin_schedule(data_range, employee)
+        message = "Для вашей роли не доступно расписание."
     await send_or_edit_message(
         update, message, reply_markup=keyboard_generator(buttons)
     )

@@ -3,11 +3,7 @@ import io
 import pandas as pd
 from constants.exceptions import ParseFail
 from constants.roles import Roles
-from google_sheet_backend import (
-    get_admins_working_time,
-    get_employees_info,
-    set_default_classes,
-)
+from google_sheet_backend import get_employees_info, set_default_classes
 from models import Employees
 
 role_fields = {
@@ -31,7 +27,7 @@ def report_parsing(binary_file: bytearray, constants: dict) -> Employees:
         raise ParseFail("Неизвестный вид отчета. Нет обязательных полей.")
     employees = get_employees_info(constants["employees"], mode)
     if mode == Roles.ADMINISTRATOR.value:
-        get_admins_working_time(employees, constants)
+        # get_admins_working_time(employees, constants)
         fields = role_fields[mode]
         for line in data:
             employees.set_attribute(

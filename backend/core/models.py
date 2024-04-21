@@ -1,5 +1,7 @@
+import asyncio
 import datetime
 
+from asgiref.sync import async_to_sync, sync_to_async
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -262,48 +264,41 @@ class Schedule(models.Model):
     )
 
     def __str__(self):
-        if self.employee:
-            return ", ".join(
-                [
-                    self.date.strftime("%d %B %Y"),
-                    self.employee.full_name,
-                    str(self.time),
-                ]
-            )
-        else:
-            return ", ".join(
-                [
-                    self.date.strftime("%d %B %Y"),
-                    "---------",
-                    str(self.time),
-                ]
-            )
+        return async_to_sync(self.full_string)(full=True)
 
     def _complete_symbol(self) -> str:
-        if datetime.datetime.today() > self.date:
+        if datetime.date.today() > self.date:
             return "✅"
         else:
             return "☑️"
 
-    def full_string(self, full: bool = True) -> str:
+    @sync_to_async
+    def get_employee_name(self):
+        """Get key name if employee exist."""
+        if self.employee:
+            return self.employee.key_name
+        else:
+            return "----"
+
+    async def full_string(self, full: bool = False) -> str:
         """Return all info in string."""
         if full:
+            employee_name = await asyncio.gather(self.get_employee_name())
             return " ".join(
                 [
-                    self._complete_symbol,
+                    self._complete_symbol(),
                     self.date.strftime("%d %B"),
-                    self.employee.key_name,
-                    "\n",
+                    employee_name[0],
                 ]
             )
         else:
             return " ".join(
-                [
-                    self._complete_symbol,
-                    self.date.strftime("%d %B"),
-                    "\n",
-                ]
+                [self._complete_symbol(), self.date.strftime("%d %B")]
             )
+
+    def full_string_sync(self, full: bool = False) -> str:
+        """Return all info in string (sync)."""
+        return async_to_sync(self.full_string)()
 
 
 class BotRequest(models.Model):

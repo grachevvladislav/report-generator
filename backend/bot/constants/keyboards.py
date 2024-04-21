@@ -10,13 +10,13 @@ class Buttons(enum.Enum):
     YES = "Да"
     NO = "Нет"
 
-    RELOAD = "Обновить"
+    TODAY = "Сегодня (Обновить)"
 
     CHECK_IS_READY = "Чек готов"
     CONFIRMATION = "Подтвердить?"
 
     SCHEDULE = "Расписание"
-    CREATE_REPORT = "Создать отчёт"
+    CREATE_REPORT = "Отчёты"
 
     LOAD_DATA = "Загрузить"
     MENU = "В меню"
@@ -48,7 +48,7 @@ def keyboard_generator(list_of_lines: list[list[list | enum.Enum]]):
 
 confirm_keyboard = keyboard_generator([[Buttons.YES, Buttons.NO]])
 
-start_keyboard = keyboard_generator([[Buttons.RELOAD]])
+start_keyboard = keyboard_generator([[Buttons.TODAY]])
 
 closing_confirmation_keyboard = keyboard_generator([[Buttons.CONFIRMATION]])
 

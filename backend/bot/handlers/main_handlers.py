@@ -10,6 +10,7 @@ from bot.handlers.schedule import show_schedule
 from bot.handlers.stuff import report_menu
 from bot.utils import PATTERN, send_or_edit_message
 from core.models import BotRequest, Employee
+from core.utils import get_related_object
 from telegram.ext import (
     CallbackQueryHandler,
     CommandHandler,
@@ -41,8 +42,8 @@ async def start(update, context):
         )
         return States.PERMISSION_DENIED
     else:
-        if employee.role == Employee.Role.ADMIN:
-            return await show_schedule(update, context)
+        if await get_related_object(employee, "role") == Employee.Role.ADMIN:
+            return show_schedule(update, context)
         elif employee.role == Employee.Role.STUFF:
             await send_or_edit_message(
                 update,
@@ -63,7 +64,7 @@ main_handler = ConversationHandler(
     states={
         States.PERMISSION_DENIED: [
             CallbackQueryHandler(
-                start, pattern=PATTERN.format(Buttons.RELOAD.name)
+                start, pattern=PATTERN.format(Buttons.TODAY.name)
             ),
         ],
         States.STUFF_MENU: [
@@ -73,6 +74,9 @@ main_handler = ConversationHandler(
             CallbackQueryHandler(
                 report_menu,
                 pattern=PATTERN.format(Buttons.CREATE_REPORT.name),
+            ),
+            CallbackQueryHandler(
+                start, pattern=PATTERN.format(Buttons.MENU.name)
             ),
         ],
         States.SCHEDULE: [

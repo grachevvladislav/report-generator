@@ -1,3 +1,4 @@
+from asgiref.sync import sync_to_async
 from bot.constants.keyboards import (
     Buttons,
     close_check_keyboard,
@@ -29,7 +30,10 @@ async def send_payment(context):
 async def add_pay_notifications(app):
     """Add a job to the queue."""
     job_queue = app.job_queue
-    for cashier in await Employee.objects.afilter(role=Employee.Role.CASHIR):
+    cashiers = await sync_to_async(Employee.objects.filter)(
+        role=Employee.Role.CASHIR
+    )
+    async for cashier in cashiers:
         jobs = job_queue.get_jobs_by_name(cashier.telegram_id)
         if jobs:
             for job in jobs:

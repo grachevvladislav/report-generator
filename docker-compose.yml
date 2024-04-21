@@ -31,27 +31,27 @@ services:
     ports:
       - 5432:5432
 
-#  bot:
-#    image: grachevvladislav/report-generator:latest
-#    container_name: report-generator-bot
-#    depends_on:
-#      - redis
-#      - db
-#    restart: always
-#    entrypoint: CMD python /app/backend/manage.py bot
-#    env_file:
-#      - .env
+  bot:
+    image: grachevvladislav/report-generator:latest
+    container_name: report-generator-bot
+    depends_on:
+      - redis
+      - db
+    restart: always
+    entrypoint: CMD python /app/backend/manage.py bot
+    env_file:
+      - .env
 
-#  django:
-#    image: grachevvladislav/report-generator:latest
-#    container_name: report-generator-django
-#    depends_on:
-#      - redis
-#      - db
-#    restart: always
-#    entrypoint: gunicorn notification_service.wsgi --bind 0.0.0.0:8000
-#    env_file:
-#      - .env
+  django:
+    image: grachevvladislav/report-generator:latest
+    container_name: report-generator-django
+    depends_on:
+      - redis
+      - db
+    restart: always
+    entrypoint: gunicorn notification_service.wsgi --bind 0.0.0.0:8000
+    env_file:
+      - .env
 
 volumes:
   redis_volume:

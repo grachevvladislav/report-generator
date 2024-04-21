@@ -21,6 +21,7 @@ django = "^5.0.2"
 django-environ = "^0.11.2"
 psycopg2-binary = "^2.9.9"
 django-admin-extra-buttons = "^1.5.7"
+asgiref = "^3.8.1"
 
 
 [tool.poetry.group.dev.dependencies]
