@@ -10,12 +10,12 @@ from bot.handlers.schedule import show_schedule
 from bot.handlers.stuff import report_menu
 from bot.utils import PATTERN, send_or_edit_message
 from core.models import BotRequest, Employee
-from core.utils import get_related_object
 from telegram.ext import (
     CallbackQueryHandler,
     CommandHandler,
     ConversationHandler,
 )
+from utils import get_related_object
 
 
 async def start(update, context):

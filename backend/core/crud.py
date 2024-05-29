@@ -1,14 +1,13 @@
-import asyncio
 import datetime
 import io
 
 from asgiref.sync import sync_to_async
 from borb.pdf import PDF, Document
 from django.core import management
+from utils import append_data
 
 from .make_pdf import create_list
 from .models import Default, Employee, Schedule
-from .utils import append_data
 
 
 async def get_missing_dates(add_empty):
@@ -16,46 +15,43 @@ async def get_missing_dates(add_empty):
     planning_horizon = await sync_to_async(Default.get_default)(
         "planning_horizon"
     )
-
-    @sync_to_async
-    def tmp(add_empty):
-        if add_empty:
-            db = (
-                Schedule.objects.filter(
-                    date__range=[
-                        start_date,
-                        append_data(start_date, days=planning_horizon),
-                    ],
+    if add_empty:
+        db_set = await (
+            sync_to_async(
+                lambda: set(
+                    Schedule.objects.filter(
+                        date__range=[
+                            start_date,
+                            append_data(start_date, days=planning_horizon),
+                        ],
+                    )
+                    .values_list("date", flat=True)
+                    .distinct()
                 )
-                .values_list("date", flat=True)
-                .distinct()
-            )
-        else:
-            db = (
-                Schedule.objects.filter(
-                    date__range=[
-                        start_date,
-                        append_data(start_date, days=planning_horizon),
-                    ],
-                    employee__isnull=False,
+            )()
+        )
+    else:
+        db_set = await (
+            sync_to_async(
+                lambda: set(
+                    Schedule.objects.filter(
+                        date__range=[
+                            start_date,
+                            append_data(start_date, days=planning_horizon),
+                        ],
+                        employee__isnull=False,
+                    )
+                    .values_list("date", flat=True)
+                    .distinct()
                 )
-                .values_list("date", flat=True)
-                .distinct()
-            )
-        return db
-
-    db_list = await asyncio.gather(asyncio.create_task(tmp(add_empty)))
-    print(db_list)
-    # need to fix
-    if len(db_list[0]) < planning_horizon:
-        all_days = [
-            append_data(start_date, days=date)
-            for date in range(planning_horizon)
-        ]
-        difference = list(set(all_days) - set(db_list[0]))
-        difference.sort()
-        return difference
-    return []
+            )()
+        )
+    all_days = [
+        append_data(start_date, days=date) for date in range(planning_horizon)
+    ]
+    difference = list(set(all_days) - set(db_set))
+    difference.sort()
+    return difference
 
 
 def export_all_tables():

@@ -18,6 +18,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     "core.apps.CoreConfig",
+    "salary.apps.SalaryConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -41,7 +42,7 @@ ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -99,7 +100,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 locale.setlocale(locale.LC_TIME, "ru_RU.UTF-8")
 
-TELEGRAM_TOKEN = env.str("TELEGRAM_TOKEN")
+TELEGRAM_TOKEN = env.str("TELEGRAM_TOKEN", "")
 CHECK_MAIL = env.str("CHECK_MAIL", False)
 INTERVAL = env.int("INTERVAL", 60)
 

@@ -1,11 +1,19 @@
-from django.shortcuts import render
+from datetime import datetime
 
-from .models import Employee
+from django.contrib import messages
+from django.http import HttpResponse
+
+from .crud import export_all_tables
 
 
-def employee_list(request):
-    employees = Employee.objects.order_by("agreement_number")
-    context = {
-        "employees": employees,
-    }
-    return render(request, "employee_list.html", context)
+def make_backup(request):
+    """Download backup file function."""
+    messages.success(request, "Загрузка начата!")
+    file = export_all_tables()
+    response = HttpResponse(file, content_type="application/json")
+    response["Content-Disposition"] = (
+        "attachment; filename=data_"
+        + datetime.today().strftime("%d.%m.%Y_%H:%M:%S")
+        + ".json"
+    )
+    return response

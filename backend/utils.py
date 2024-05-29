@@ -1,6 +1,7 @@
 import datetime
 
 from asgiref.sync import sync_to_async
+from django.contrib import messages
 
 
 def append_data(date, *args, **kwargs):
@@ -23,3 +24,12 @@ def plural_days(n):
 @sync_to_async
 def get_related_object(obj, related):
     return getattr(obj, related)
+
+
+def add_messages(request, new_messages):
+    msg_storage = messages.get_messages(request)
+    msg_list = [m.message for m in msg_storage]
+    msg_storage.used = False
+    for text in new_messages:
+        if text not in msg_list:
+            messages.error(request, text)

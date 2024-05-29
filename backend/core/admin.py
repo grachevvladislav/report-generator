@@ -1,25 +1,15 @@
-import asyncio
-from datetime import datetime
-
 from admin_extra_buttons.mixins import ExtraButtonsMixin
 from asgiref.sync import async_to_sync
 from django.contrib import admin, messages
-from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path
+from utils import add_messages, plural_days
 
-from .crud import export_all_tables, get_missing_dates
+from .crud import get_missing_dates
 from .filters import DateFilter, EmployeeScheduleFiler
-from .models import (
-    ActivitieType,
-    BotRequest,
-    Default,
-    Document,
-    Employee,
-    Schedule,
-)
-from .utils import plural_days
+from .models import BotRequest, Default, Employee, Schedule
+from .views import make_backup
 
 
 class EmployeeAdmin(admin.ModelAdmin):
@@ -54,18 +44,6 @@ class BotRequestAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-class ActivitieTypeAdmin(admin.ModelAdmin):
-    """ActivitieType admin site."""
-
-    list_display = (
-        "full_name",
-        "duration_in_hours",
-        "salary",
-    )
-    search_fields = ("full_name",)
-    list_filter = ("salary",)
-
-
 class DefaultAdmin(ExtraButtonsMixin, admin.ModelAdmin):
     """DefaultAdmin admin site."""
 
@@ -77,23 +55,11 @@ class DefaultAdmin(ExtraButtonsMixin, admin.ModelAdmin):
     change_list_template = "change_list.html"
     change_form_template = "admin/change_form.html"
 
-    def make_backup(self, request):
-        """Download backup file function."""
-        messages.success(request, "Загрузка начата!")
-        file = export_all_tables()
-        response = HttpResponse(file, content_type="application/json")
-        response["Content-Disposition"] = (
-            "attachment; filename=data_"
-            + datetime.today().strftime("%d.%m.%Y_%H:%M:%S")
-            + ".json"
-        )
-        return response
-
     def get_urls(self):
         """Add backup endpoint."""
         urls = super().get_urls()
         custom_urls = [
-            path("make_backup/", self.make_backup, name="make_backup"),
+            path("make_backup/", make_backup, name="make_backup"),
         ]
         return custom_urls + urls
 
@@ -104,15 +70,6 @@ class DefaultAdmin(ExtraButtonsMixin, admin.ModelAdmin):
             {"url": "admin:make_backup", "name": "Сделать бекап"},
         ]
         return super().changelist_view(request, extra_context=extra_context)
-
-
-class DocumentAdmin(admin.ModelAdmin):
-    """Document model admin site."""
-
-    fields = [
-        "number",
-        ("start_date", "end_date"),
-    ]
 
 
 class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
@@ -134,7 +91,7 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
                 [
                     Schedule(date=date)
                     for date in async_to_sync(get_missing_dates)(
-                        enable_empty=False
+                        add_empty=True
                     )
                 ]
             )
@@ -146,9 +103,7 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
                 "title": "Вставить расписание",
                 "text": f"Добавить недостающие записи на {plural_days(Default.get_default('planning_horizon'))}?",
                 "title2": "Создаваемые записи",
-                "objects": async_to_sync(get_missing_dates)(
-                    enable_empty=False
-                ),
+                "objects": async_to_sync(get_missing_dates)(add_empty=True),
                 "opts": self.model._meta,
             }
             return TemplateResponse(request, "confirm.html", context)
@@ -167,7 +122,7 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
 
     def changelist_view(self, request, extra_context=None):
         """Add notice of deficiencies in next 30 day's planning."""
-        difference = asyncio.run(get_missing_dates(add_empty=True))
+        difference = async_to_sync(get_missing_dates)(add_empty=False)
         if difference:
             grouped_dates = []
             current_group = [difference[0]]
@@ -178,16 +133,14 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
                     grouped_dates.append(current_group)
                     current_group = [difference[i]]
             grouped_dates.append(current_group)
-            msg_storage = messages.get_messages(request)
-            msg_list = [m.message for m in msg_storage]
+            msgs = []
             for group in grouped_dates:
                 if len(group) == 1:
                     text = f"Не назначен сотрудник на {group[0].strftime('%d %B')}"
                 else:
                     text = f"Не назначен сотрудник c {group[0].strftime('%d %B')} по {group[-1].strftime('%d %B')}"
-                if text not in msg_list:
-                    messages.error(request, text)
-            msg_storage.used = False
+                msgs.append(text)
+            add_messages(request, msgs)
         extra_context = extra_context or {}
         extra_context["buttons"] = [
             {"url": "admin:insert_schedule", "name": "Вставить расписание"},
@@ -215,9 +168,7 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-admin.site.register(ActivitieType, ActivitieTypeAdmin)
 admin.site.register(Employee, EmployeeAdmin)
 admin.site.register(Default, DefaultAdmin)
 admin.site.register(Schedule, ScheduleAdmin)
-admin.site.register(Document, DocumentAdmin)
 admin.site.register(BotRequest, BotRequestAdmin)
