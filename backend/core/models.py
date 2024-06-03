@@ -82,7 +82,7 @@ class Employee(models.Model):
     name = models.CharField("Имя")
     patronymic = models.CharField("Отчество", blank=True, null=True)
     inn = models.CharField(
-        "ИНН", max_length=10, unique=True, blank=True, null=True
+        "ИНН", max_length=12, unique=True, blank=True, null=True
     )
     address = models.CharField("Адрес, как в паспорте", blank=True, null=True)
     checking_account = models.DecimalField(

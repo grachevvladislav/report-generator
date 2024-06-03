@@ -38,16 +38,17 @@ class DateFilter(admin.SimpleListFilter):
             return queryset
 
 
-class EmployeeScheduleFiler(admin.SimpleListFilter):
+class EmployeeScheduleFilter(admin.SimpleListFilter):
     """Group schedule by Employee."""
 
     title = "Сотрудник"
     parameter_name = "employee"
+    role_list = [Employee.Role.ADMIN, Employee.Role.OWNER]
 
     def lookups(self, request, model_admin):
         """Get list of options."""
         query = Employee.objects.filter(
-            role__in=[Employee.Role.ADMIN, Employee.Role.OWNER],
+            role__in=self.role_list,
         )
         return ((i.id, i.display_name) for i in query)
 

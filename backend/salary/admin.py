@@ -1,9 +1,14 @@
-from django.contrib import admin, messages
+from core.filters import DateFilter
+from django.contrib import admin
+from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path
+from utils import add_messages
 
+from .filters import EmployeeAccrualFilter
 from .forms import CsvForm
 from .models import Accrual, ActivitieType, Document
+from .serializers import AccrualSerializer
 
 
 class ActivitieTypeAdmin(admin.ModelAdmin):
@@ -31,6 +36,7 @@ class AccrualAdmin(admin.ModelAdmin):
     """Accrual model admin site."""
 
     list_display = ("date", "employee", "name", "base", "sum")
+    list_filter = (DateFilter, EmployeeAccrualFilter)
 
     change_list_template = "change_list.html"
     change_form_template = "admin/change_form.html"
@@ -41,20 +47,34 @@ class AccrualAdmin(admin.ModelAdmin):
             **self.admin_site.each_context(request),
             "title": "Загрузка файла отчета о проведенных занятиях",
             "opts": self.model._meta,
-            "submit_csv_form": CsvForm,
+            "form": CsvForm(),
         }
         if request.method == "POST":
-            form = CsvForm(request.POST)
-            if form.is_valid():
-                pass
+            form = CsvForm(request.POST, request.FILES)
+            if "db_save" in request.POST:
+                data = request.session.get("uploaded_data", [])
+                serializer = AccrualSerializer(data=data, many=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return redirect("admin:salary_accrual_changelist")
+                else:
+                    add_messages(
+                        request,
+                        [
+                            str(er["non_field_errors"][0])
+                            for er in serializer.errors
+                        ],
+                    )
+            elif form.is_valid():
+                request.session["uploaded_data"] = AccrualSerializer(
+                    form.cleaned_data["csv_file"], many=True
+                ).data
+                context["objects"] = form.cleaned_data["csv_file"]
             else:
-                context["is_load"] = True
-                print(form.errors.items())
-                messages.error(request, str(""))
-                return TemplateResponse(request, "load_file.html", context)
-        else:
-            context["is_load"] = False
-            return TemplateResponse(request, "load_file.html", context)
+                err = form.errors["csv_file"].as_text()
+                fix_err = err.replace("* [&#x27;", "").replace("&#x27;]", "")
+                add_messages(request, fix_err.split("&#x27;, &#x27;"))
+        return TemplateResponse(request, "load_file.html", context)
 
     def get_urls(self):
         """Add import_csv endpoint."""

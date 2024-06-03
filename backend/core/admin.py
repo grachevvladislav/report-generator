@@ -7,7 +7,7 @@ from django.urls import path
 from utils import add_messages, plural_days
 
 from .crud import get_missing_dates
-from .filters import DateFilter, EmployeeScheduleFiler
+from .filters import DateFilter, EmployeeScheduleFilter
 from .models import BotRequest, Default, Employee, Schedule
 from .views import make_backup
 
@@ -21,7 +21,14 @@ class EmployeeAdmin(admin.ModelAdmin):
         "is_active",
         "role",
     )
-    search_fields = ("tax_regime",)
+    search_fields = (
+        "tax_regime",
+        "is_active",
+        "role",
+        "inn",
+        "ogrnip",
+        "address",
+    )
     list_filter = ("is_active", "role")
 
 
@@ -78,7 +85,7 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
     actions = ("set_default_time",)
     list_editable = ("employee",)
     ordering = ("-date",)
-    list_filter = (DateFilter, EmployeeScheduleFiler)
+    list_filter = (DateFilter, EmployeeScheduleFilter)
     list_display = ("full_string_sync", "employee", "time")
 
     change_list_template = "change_list.html"

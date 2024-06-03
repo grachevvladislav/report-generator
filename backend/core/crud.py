@@ -2,11 +2,9 @@ import datetime
 import io
 
 from asgiref.sync import sync_to_async
-from borb.pdf import PDF, Document
 from django.core import management
 from utils import append_data
 
-from .make_pdf import create_list
 from .models import Default, Employee, Schedule
 
 
@@ -91,18 +89,3 @@ async def get_schedule(
     if not previous:
         message += "Пока нет расписания на выбранный период"
     return message
-
-
-def create_pdf(employees: list[Employee], constants: dict) -> io.BytesIO:
-    doc = Document()
-    for employee in employees.get_active_employee():
-        constants["document_counter"] += 1
-        employee_dict = employee.to_dict()
-        employee_dict.update(constants)
-        page = create_list(employee_dict)
-        doc.add_page(page)
-
-    memory_file = io.BytesIO()
-    PDF.dumps(memory_file, doc)
-    memory_file.seek(0)
-    return memory_file

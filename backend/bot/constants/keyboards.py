@@ -40,7 +40,7 @@ def keyboard_generator(list_of_lines: list[list[list | enum.Enum]]):
                 )
             else:
                 raise InnerFail(
-                    f"Не могу сделать кнопу из: '{button}'. Проверьте тип данных."
+                    f"Не могу сделать кнопу из: '{button}'. Проверь тип данных."
                 )
         result.append(line_result)
     return InlineKeyboardMarkup(result)

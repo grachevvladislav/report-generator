@@ -19,35 +19,20 @@
 {% endblock %}
 
 {% block content %}
-
-{% if is_load %}
-    {% if objects %}
-        <h2>Будут добавлены записи:</h2>
-        {% for object in objects %}
-            <ul>{{ object }}</ul>
-        {% endfor %}
-    {% else %}
-        <h2>Нет записей для добавления!</h2>
-    {% endif %}
-
-    <form method="post">{% csrf_token %}
-        <div>
-            <input type="hidden" name="action" value="delete_selected">
-            <input type="hidden" name="post" value="yes">
-            <input type="submit" value="Добавить">
-            <a href="#" class="button cancel-link">Нет, я передумал</a>
-        </div>
-    </form>
-{% else %}
-    <form method="post">{% csrf_token %}
     <div>
         <form id="upload-csv-form" action="{% url 'admin:import_csv' %}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            <p>{{ submit_csv_form.as_p }}</p>
-            <p><input type="submit" value="Загрузить" />
-        <a href="#" class="button cancel-link">Нет, я передумал</a>
+            {% if objects %}
+                <h2>Будут добавлены записи:</h2>
+                {% for object in objects %}
+                    <ul>{{ object }}</ul>
+                {% endfor %}
+                <input type="submit" name="db_save" value="Добавить" />
+            {% else %}
+                <p>{{ form.as_p }}</p>
+                <input type="submit" value="Загрузить" />
+            {% endif %}
+            <a href="#" class="button cancel-link">Назад</a>
         </form>
     </div>
-</form>
-{% endif %}
 {% endblock %}

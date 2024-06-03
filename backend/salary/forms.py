@@ -1,6 +1,9 @@
 from django.core.exceptions import ValidationError
 from django.forms import forms
 
+from .exceptions import ParseFail
+from .file_parse import report_parsing
+
 
 class CsvForm(forms.Form):
     """CSV receive form."""
@@ -10,6 +13,8 @@ class CsvForm(forms.Form):
     def clean_csv_file(self):
         """Validate csv_file field."""
         file = self.cleaned_data["csv_file"]
-        if False:
-            raise ValidationError("Email already exists")
-        return file
+        try:
+            objects = report_parsing(file)
+        except ParseFail as e:
+            raise ValidationError(e)
+        return objects
