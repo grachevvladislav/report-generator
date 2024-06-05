@@ -4,6 +4,12 @@ from .models import Employee
 
 
 class EmployeeAccrualFilter(EmployeeScheduleFilter):
-    """Group schedule by Employee."""
+    """Group Accrual by Employee."""
 
     role_list = [Employee.Role.TRAINER, Employee.Role.OWNER]
+
+
+class EmployeeSaleFilter(EmployeeScheduleFilter):
+    """Group Sales by Employee."""
+
+    role_list = [Employee.Role.ADMIN]

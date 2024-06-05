@@ -6,7 +6,7 @@ from django.template.response import TemplateResponse
 from django.urls import path
 from utils import add_messages
 
-from .filters import EmployeeAccrualFilter
+from .filters import EmployeeAccrualFilter, EmployeeSaleFilter
 from .forms import TrainerCsvForm
 from .models import Accrual, ActivitieType, Document, Sale
 from .serializers import AccrualSerializer, SaleSerializer
@@ -110,7 +110,7 @@ class SaleAdmin(admin.ModelAdmin):
     """Sale model admin site."""
 
     list_display = ("date", "employee", "name", "sum")
-    list_filter = (DateFilter, EmployeeAccrualFilter)
+    list_filter = (DateFilter, EmployeeSaleFilter)
 
     change_list_template = "change_list.html"
     change_form_template = "admin/change_form.html"

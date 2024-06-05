@@ -8,12 +8,7 @@ from django.db import models
 from django.db.utils import ProgrammingError
 from django.forms.models import model_to_dict
 
-from .constants import (
-    cashir_required_fields,
-    cz_required_fields,
-    ip_required_fields,
-    stuff_required_fields,
-)
+from .constants import base_required_fields, ip_required_fields
 
 
 class Default(models.Model):
@@ -32,6 +27,7 @@ class Default(models.Model):
             MinValueValidator(1),
         ],
     )
+    cashier_telegram_id = models.IntegerField("Telegram id")
 
     async def clean(self):
         """Clean data."""
@@ -75,7 +71,6 @@ class Employee(models.Model):
         OWNER = "Владелец", "Владелец"
         TRAINER = "Тренер", "Тренер"
         STUFF = "stuff", "stuff"
-        CASHIR = "Кассир", "Кассир"
         ADMIN = "Администратор", "Администратор"
 
     surname = models.CharField("Фамилия", blank=True, null=True)
@@ -180,16 +175,16 @@ class Employee(models.Model):
         ):
             raise ValidationError("Может быть только один кассир!")
         errors = {}
-        if self.tax_regime == self.TaxRegime.IP:
-            required_fields = ip_required_fields
-        elif self.tax_regime == self.TaxRegime.CZ:
-            required_fields = cz_required_fields
-        elif self.role == self.Role.CASHIR:
-            required_fields = cashir_required_fields
-        elif self.role == self.Role.STUFF:
-            required_fields = stuff_required_fields
+        if self.tax_regime == self.TaxRegime.NOT_TAXED:
+            required_fields = [
+                "name",
+            ]
         else:
-            required_fields = []
+            required_fields = base_required_fields
+
+        if self.tax_regime == self.TaxRegime.IP:
+            required_fields.extend(ip_required_fields)
+
         for field in required_fields:
             if getattr(self, field) is None:
                 errors[field] = "Обязательное поле!"

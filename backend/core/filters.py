@@ -47,8 +47,17 @@ class EmployeeScheduleFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         """Get list of options."""
-        query = Employee.objects.filter(
-            role__in=self.role_list,
+        query = list(
+            Employee.objects.filter(
+                role__in=self.role_list, is_active=True
+            ).order_by("surname", "name", "patronymic")
+        )
+        query.extend(
+            list(
+                Employee.objects.filter(
+                    role__in=self.role_list, is_active=False
+                ).order_by("surname", "name", "patronymic")
+            )
         )
         return ((i.id, i.display_name) for i in query)
 
