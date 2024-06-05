@@ -84,7 +84,7 @@ async def get_schedule(
         ):
             message += "------------\n"
         previous = day
-        message += await day.full_string(full=not employee)
+        message += await day.full_string_async(full=not employee)
         message += "\n"
     if not previous:
         message += "Пока нет расписания на выбранный период"

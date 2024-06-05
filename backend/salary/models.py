@@ -55,7 +55,7 @@ class Accrual(models.Model):
         verbose_name_plural = "начисления"
         unique_together = ("date", "employee", "name", "base", "sum")
 
-    date = models.DateField("Дата начисления")
+    date = models.DateTimeField("Дата начисления")
     employee = models.ForeignKey(
         Employee,
         on_delete=models.CASCADE,
@@ -90,3 +90,26 @@ class Accrual(models.Model):
             sum=self.sum,
         ).exists():
             raise AlreadyExists("Запись уже существует")
+
+
+class Sale(models.Model):
+    """Sale from FitBase."""
+
+    class Meta:
+        """Sale metaclass."""
+
+        verbose_name = "Продажа"
+        verbose_name_plural = "Продажи"
+        unique_together = ("date", "employee", "name", "sum")
+
+    date = models.DateTimeField("Дата оплаты")
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="sale",
+        blank=True,
+        null=True,
+        default=None,
+    )
+    sum = models.FloatField("Сумма")
+    name = models.CharField("Название", blank=True, null=True)

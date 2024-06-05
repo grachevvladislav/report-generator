@@ -8,3 +8,14 @@
         {% endfor %}
     {% endif %}
 {% endblock %}
+
+
+{% block result_list %}
+    {{ block.super }}
+    {% if total %}
+        <div class="results" style="display: flex; justify-content: space-between; align-items: center;">
+            <div><h3>Сумма всех записей:</h3></div>
+            <div><h3>{{ total }}</h3></div>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -209,6 +209,7 @@ class Schedule(models.Model):
     date = models.DateField("Дата")
     employee = models.ForeignKey(
         Employee,
+        verbose_name="Сотрудник",
         on_delete=models.CASCADE,
         related_name="schedule",
         blank=True,
@@ -223,7 +224,7 @@ class Schedule(models.Model):
     )
 
     def __str__(self):
-        return async_to_sync(self.full_string)(full=True)
+        return async_to_sync(self.full_string_async)(full=True)
 
     def _complete_symbol(self) -> str:
         if datetime.date.today() > self.date:
@@ -239,7 +240,7 @@ class Schedule(models.Model):
         else:
             return "----"
 
-    async def full_string(self, full: bool = False) -> str:
+    async def full_string_async(self, full: bool = False) -> str:
         """Return all info in string."""
         if full:
             employee_name = await asyncio.gather(self.get_employee_name())
@@ -255,9 +256,11 @@ class Schedule(models.Model):
                 [self._complete_symbol(), self.date.strftime("%d %B")]
             )
 
-    def full_string_sync(self, full: bool = False) -> str:
+    def full_string(self, full: bool = False) -> str:
         """Return all info in string (sync)."""
-        return async_to_sync(self.full_string)()
+        return async_to_sync(self.full_string_async)()
+
+    full_string.short_description = "Дата"
 
 
 class BotRequest(models.Model):

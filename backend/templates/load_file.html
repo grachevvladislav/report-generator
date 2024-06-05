@@ -20,7 +20,7 @@
 
 {% block content %}
     <div>
-        <form id="upload-csv-form" action="{% url 'admin:import_csv' %}" method="post" enctype="multipart/form-data">
+        <form id="upload-csv-form" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {% if objects %}
                 <h2>Будут добавлены записи:</h2>
