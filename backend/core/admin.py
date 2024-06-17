@@ -7,7 +7,9 @@ from django.urls import path
 from utils import add_messages, plural_days
 
 from .crud import get_missing_dates
-from .filters import DateFilter, EmployeeScheduleFilter
+from .filters import DateFilter
+
+# EmployeeScheduleFilter
 from .models import BotRequest, Default, Employee, Schedule
 from .views import make_backup
 
@@ -17,19 +19,15 @@ class EmployeeAdmin(admin.ModelAdmin):
 
     list_display = (
         "full_name",
-        "tax_regime",
         "is_active",
-        "role",
     )
     search_fields = (
         "tax_regime",
         "is_active",
-        "role",
         "inn",
-        "ogrnip",
         "address",
     )
-    list_filter = ("is_active", "role")
+    list_filter = ("is_active",)
 
 
 class BotRequestAdmin(admin.ModelAdmin):
@@ -85,7 +83,10 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
     actions = ("set_default_time",)
     list_editable = ("employee",)
     ordering = ("-date",)
-    list_filter = (DateFilter, EmployeeScheduleFilter)
+    list_filter = (
+        DateFilter,
+        # EmployeeScheduleFilter
+    )
     list_display = ("full_string", "employee", "time")
 
     change_list_template = "change_list.html"
@@ -166,13 +167,13 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
                 obj.save()
             messages.success(request, "Успех!")
 
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        """Only administrators can be on the schedule."""
-        if db_field.name == "employee":
-            kwargs["queryset"] = Employee.objects.filter(
-                role__in=[Employee.Role.ADMIN, Employee.Role.OWNER],
-            )
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    # def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    #     """Only administrators can be on the schedule."""
+    #     if db_field.name == "employee":
+    #         kwargs["queryset"] = Employee.objects.filter(
+    #             role__in=[Employee.Role.ADMIN, Employee.Role.OWNER],
+    #         )
+    #     return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 admin.site.register(Employee, EmployeeAdmin)

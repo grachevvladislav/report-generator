@@ -1,48 +1,25 @@
+from decimal import Decimal
+
 from core.models import Employee
+from django.contrib.postgres.fields import ArrayField
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from .exceptions import AlreadyExists
 
 
-class ActivitieType(models.Model):
-    """ActivitieType model."""
+class SalaryCertificate(models.Model):
+    """SalaryCertificate model."""
 
     class Meta:
-        """ActivitieType metaclass."""
+        """SalaryCertificate metaclass."""
 
-        verbose_name = "правило"
-        verbose_name_plural = "правила"
-
-    name = models.CharField("Начисление", blank=True, null=True, unique=True)
-    salary = models.IntegerField("Сумма")
-    duration_in_hours = models.FloatField(
-        "Длительность", blank=True, null=True
-    )
-    comment = models.CharField(
-        "Комментарий", blank=True, null=True, unique=True
-    )
-
-    @property
-    def full_name(self):
-        """Full name of activitie."""
-        return " ".join(filter(None, [self.name, self.comment]))
-
-
-class Document(models.Model):
-    """Document model."""
-
-    class Meta:
-        """Document metaclass."""
-
-        verbose_name = "акт"
-        verbose_name_plural = "акты"
+        verbose_name = "зарплатный акт"
+        verbose_name_plural = "зарплатные акты"
 
     number = models.IntegerField("Номер документа", unique=True)
     start_date = models.DateField("Начало отчётного периода")
     end_date = models.DateField("Конец отчётного периода")
-    employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, related_name="document"
-    )
 
 
 class Accrual(models.Model):
@@ -113,3 +90,107 @@ class Sale(models.Model):
     )
     sum = models.FloatField("Сумма")
     name = models.CharField("Название", blank=True, null=True)
+
+
+class Contract(models.Model):
+    """Contract model."""
+
+    class Meta:
+        """Contract rule metaclass."""
+
+        verbose_name = "договор"
+        verbose_name_plural = "договоры"
+
+    class Role(models.TextChoices):
+        """Types of system role."""
+
+        TRAINER = "Тренер", "Тренер"
+        ADMIN = "Администратор", "Администратор"
+
+    employee = models.ForeignKey(
+        Employee, on_delete=models.CASCADE, related_name="сontract"
+    )
+
+    is_active = models.BooleanField("Договор действует", default=True)
+    role = models.CharField(choices=Role.choices, default=Role.TRAINER)
+    tax_registration_date = models.DateField(
+        "Дата регистрации в качестве плательщика НПД", blank=True, null=True
+    )
+    number = models.IntegerField("Номер договора", unique=True)
+    start_date = models.DateField("Дата заключения договора")
+    end_date = models.DateField(
+        "Дата окончания договора", blank=True, null=True
+    )
+
+    @property
+    def full_value(self):
+        """Full value for report."""
+        if self.tax_regime == self.TaxRegime.CZ:
+            return (
+                f"{self.tax_regime} {self.employee.surname} "
+                f"{self.employee.name} {self.employee.patronymic}, ИНН: "
+                f"{self.employee.inn}, {self.employee.address}, р/с "
+                f"{self.employee.checking_account}, {self.employee.bank}, БИК: "
+                f"{self.employee.bik}, к/с "
+                f"{self.employee.correspondent_account}"
+            )
+        else:
+            return (
+                f"{self.tax_regime} {self.employee.surname} "
+                f"{self.employee.name} {self.employee.patronymic}, ОГРНИП: "
+                f"{self.ogrnip}, ИНН: {self.employee.inn}, "
+                f"{self.employee.address}, р/с {self.employee.checking_account}"
+                f", {self.employee.bank}, БИК: {self.employee.bik}, к/с "
+                f"{self.employee.correspondent_account}"
+            )
+
+    @property
+    def display_name(self):
+        """Admin site display name."""
+        if self.is_active:
+            return " ".join([str(self.number), self.employee.full_name])
+        else:
+            return " ".join([str(self.number), self.employee.full_name, "⛔️"])
+
+    def __str__(self):
+        return self.display_name
+
+
+class Rule(models.Model):
+    """Salary rule model."""
+
+    class Meta:
+        """Salary rule metaclass."""
+
+        verbose_name = "правило"
+        verbose_name_plural = "правила"
+
+    class Type(models.TextChoices):
+        """Types of salary rule."""
+
+        RATE = "Ставка", "Ставка"
+        ACCRUAL_AMOUNT = "Сумма начислений", "Сумма начислений"
+        PERCENTAGE_OF_SALAS = (
+            "Процент от личных продаж",
+            "Процент от личных продаж",
+        )
+        HOURLY_PAYMENT = "Почасовая оплата", "Почасовая оплата"
+
+    type = models.CharField(choices=Type.choices, default=Type.RATE)
+    name = models.CharField("Название")
+    rate_value = models.FloatField("Сумма")
+    required_fields = ArrayField(models.CharField(), blank=True, null=True)
+    percentage_value = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        default=Decimal(0),
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )
+    contract = models.ForeignKey(
+        Contract,
+        on_delete=models.CASCADE,
+        related_name="rule",
+    )
+
+    def __str__(self):
+        return " ".join([self.type, self.name])

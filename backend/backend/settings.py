@@ -17,6 +17,7 @@ ALLOWED_HOSTS = []
 
 
 INSTALLED_APPS = [
+    "admin_reorder",
     "core.apps.CoreConfig",
     "salary.apps.SalaryConfig",
     "django.contrib.admin",
@@ -35,6 +36,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "admin_reorder.middleware.ModelAdminReorder",
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -110,4 +112,21 @@ SITE_PASSWORD = env.str("SITE_PASSWORD")
 
 CUSTOM_FONT = TrueTypeFont.true_type_font_from_file(
     Path("files/Source Serif Pro.ttf")
+)
+
+ADMIN_REORDER = (
+    {
+        "app": "salary",
+        "label": "Загрузка отчётов",
+        "models": ("salary.Accrual", "salary.Sale"),
+    },
+    {
+        "app": "salary",
+        "label": "Документы",
+        "models": (
+            "salary.Contract",
+            "salary.Rule",
+            "salary.SalaryCertificate",
+        ),
+    },
 )

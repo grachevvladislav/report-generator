@@ -6,9 +6,8 @@ from django.template.response import TemplateResponse
 from django.urls import path
 from utils import add_messages
 
-from .filters import EmployeeAccrualFilter, EmployeeSaleFilter
 from .forms import TrainerCsvForm
-from .models import Accrual, ActivitieType, Document, Sale
+from .models import Accrual, Contract, Rule, SalaryCertificate, Sale
 from .serializers import AccrualSerializer, SaleSerializer
 
 
@@ -24,8 +23,8 @@ class ActivitieTypeAdmin(admin.ModelAdmin):
     list_filter = ("salary",)
 
 
-class DocumentAdmin(admin.ModelAdmin):
-    """Document model admin site."""
+class SalaryCertificateAdmin(admin.ModelAdmin):
+    """SalaryCertificate model admin site."""
 
     fields = [
         "number",
@@ -33,11 +32,40 @@ class DocumentAdmin(admin.ModelAdmin):
     ]
 
 
+class RuleAdmin(admin.ModelAdmin):
+    """Rule model admin site."""
+
+    fields = [
+        "type",
+        "name",
+        "rate_value",
+        "required_fields",
+        "percentage_value",
+    ]
+
+
+class RuleInLine(admin.TabularInline):
+    """Inline add Rule for Contract edit."""
+
+    model = Rule
+    extra = 0
+    # fields = ['type', 'name']
+
+
+class ContractAdmin(admin.ModelAdmin):
+    """ContractAdmin model admin site."""
+
+    list_display = ["number", "employee", "role", "is_active"]
+    inlines = [
+        RuleInLine,
+    ]
+
+
 class AccrualAdmin(admin.ModelAdmin):
     """Accrual model admin site."""
 
     list_display = ("date", "employee", "name", "base", "sum")
-    list_filter = (DateFilter, EmployeeAccrualFilter)
+    list_filter = (DateFilter,)
 
     change_list_template = "change_list.html"
     change_form_template = "admin/change_form.html"
@@ -110,7 +138,7 @@ class SaleAdmin(admin.ModelAdmin):
     """Sale model admin site."""
 
     list_display = ("date", "employee", "name", "sum")
-    list_filter = (DateFilter, EmployeeSaleFilter)
+    list_filter = (DateFilter,)
 
     change_list_template = "change_list.html"
     change_form_template = "admin/change_form.html"
@@ -176,7 +204,8 @@ class SaleAdmin(admin.ModelAdmin):
         return response
 
 
-admin.site.register(ActivitieType, ActivitieTypeAdmin)
-admin.site.register(Document, DocumentAdmin)
+admin.site.register(SalaryCertificate, SalaryCertificateAdmin)
 admin.site.register(Accrual, AccrualAdmin)
 admin.site.register(Sale, SaleAdmin)
+admin.site.register(Rule, RuleAdmin)
+admin.site.register(Contract, ContractAdmin)

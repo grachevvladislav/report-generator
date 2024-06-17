@@ -8,7 +8,7 @@ from django.db import models
 from django.db.utils import ProgrammingError
 from django.forms.models import model_to_dict
 
-from .constants import base_required_fields, ip_required_fields
+from .validators import exclude_future_dates, passport_series_validator
 
 
 class Default(models.Model):
@@ -63,21 +63,24 @@ class Employee(models.Model):
 
         IP = "ИП", "Индивидуальный предприниматель"
         CZ = "СЗ", "Самозанятый"
-        NOT_TAXED = "Нет", "Не облагается налогом"
-
-    class Role(models.TextChoices):
-        """Types of system role."""
-
-        OWNER = "Владелец", "Владелец"
-        TRAINER = "Тренер", "Тренер"
-        STUFF = "stuff", "stuff"
-        ADMIN = "Администратор", "Администратор"
 
     surname = models.CharField("Фамилия", blank=True, null=True)
     name = models.CharField("Имя")
     patronymic = models.CharField("Отчество", blank=True, null=True)
     inn = models.CharField(
         "ИНН", max_length=12, unique=True, blank=True, null=True
+    )
+    email = models.CharField("Email")
+    tax_regime = models.CharField(
+        choices=TaxRegime.choices, default=TaxRegime.CZ
+    )
+    ogrnip = models.DecimalField(
+        "ОГРНИП",
+        max_digits=20,
+        decimal_places=0,
+        blank=True,
+        null=True,
+        unique=True,
     )
     address = models.CharField("Адрес, как в паспорте", blank=True, null=True)
     checking_account = models.DecimalField(
@@ -93,30 +96,37 @@ class Employee(models.Model):
     correspondent_account = models.DecimalField(
         "Кор. счёт", max_digits=20, decimal_places=0, blank=True, null=True
     )
-    ogrnip = models.DecimalField(
-        "ОГРНИП",
-        max_digits=20,
-        decimal_places=0,
+    passport_series = models.CharField(
+        "Серия паспорта",
+        max_length=4,
+        validators=[
+            passport_series_validator,
+        ],
         blank=True,
         null=True,
-        unique=True,
     )
-    agreement_number = models.IntegerField(
-        "Номер договора", blank=True, null=True, unique=True
+    passport_number = models.CharField(
+        "Номер паспорта", max_length=6, blank=True, null=True
     )
-    agreement_date = models.DateField(
-        "Дата заключения догвора", blank=True, null=True
+    issued_by = models.CharField("Кем выдан", blank=True, null=True)
+    date_of_issue = models.DateField(
+        "Дата выдачи",
+        validators=[
+            exclude_future_dates,
+        ],
+        blank=True,
+        null=True,
     )
+    department_code = models.CharField(
+        "Кем выдан", max_length=7, blank=True, null=True
+    )
+
     telegram_id = models.IntegerField(
         "Telegram id", blank=True, null=True, unique=True
     )
-    tax_regime = models.CharField(
-        max_length=3, choices=TaxRegime.choices, default=TaxRegime.CZ
-    )
-    role = models.CharField(
-        max_length=13, choices=Role.choices, default=Role.TRAINER
-    )
     is_active = models.BooleanField(default=True)
+    is_stuff = models.BooleanField(default=False)
+    is_owner = models.BooleanField(default=False)
 
     @property
     def full_name(self):
@@ -138,58 +148,39 @@ class Employee(models.Model):
         else:
             return " ".join([self.full_name, "⛔️"])
 
-    @property
-    def full_value(self):
-        """Full value for report."""
-        if self.tax_regime == self.TaxRegime.CZ:
-            return (
-                f"{self.tax_regime} {self.surname} {self.name} "
-                f"{self.patronymic}, ИНН: {self.inn}, {self.address}, р/с "
-                f"{self.checking_account}, {self.bank}, БИК: {self.bik}, "
-                f"к/с {self.correspondent_account}"
-            )
-        else:
-            return (
-                f"{self.tax_regime} {self.surname} {self.name} "
-                f"{self.patronymic}, ОГРНИП: {self.ogrnip}, ИНН: {self.inn}"
-                f", {self.address}, р/с {self.checking_account}, "
-                f"{self.bank}, БИК: {self.bik}, к/с "
-                f"{self.correspondent_account}"
-            )
-
     def __str__(self):
         return self.display_name
 
-    def clean(self):
-        """Clean data."""
-        if (
-            self.id is None
-            and self.role is Employee.Role.OWNER.value
-            and Employee.objects.filter(role=Employee.Role.OWNER).count() > 0
-        ):
-            raise ValidationError("Может быть только один владелец!")
-        if (
-            self.id is None
-            and self.role is Employee.Role.CASHIR.value
-            and Employee.objects.filter(role=Employee.Role.CASHIR).count() > 0
-        ):
-            raise ValidationError("Может быть только один кассир!")
-        errors = {}
-        if self.tax_regime == self.TaxRegime.NOT_TAXED:
-            required_fields = [
-                "name",
-            ]
-        else:
-            required_fields = base_required_fields
-
-        if self.tax_regime == self.TaxRegime.IP:
-            required_fields.extend(ip_required_fields)
-
-        for field in required_fields:
-            if getattr(self, field) is None:
-                errors[field] = "Обязательное поле!"
-        if errors:
-            raise ValidationError(errors)
+    # def clean(self):
+    #     """Clean data."""
+    #     if (
+    #         self.id is None
+    #         and self.role is Employee.Role.OWNER.value
+    #         and Employee.objects.filter(role=Employee.Role.OWNER).count() > 0
+    #     ):
+    #         raise ValidationError("Может быть только один владелец!")
+    #     if (
+    #         self.id is None
+    #         and self.role is Employee.Role.CASHIR.value
+    #         and Employee.objects.filter(role=Employee.Role.CASHIR).count() > 0
+    #     ):
+    #         raise ValidationError("Может быть только один кассир!")
+    #     errors = {}
+    #     if self.tax_regime == self.TaxRegime.NOT_TAXED:
+    #         required_fields = [
+    #             "name",
+    #         ]
+    #     else:
+    #         required_fields = base_required_fields
+    #
+    #     if self.tax_regime == self.TaxRegime.IP:
+    #         required_fields.extend(ip_required_fields)
+    #
+    #     for field in required_fields:
+    #         if getattr(self, field) is None:
+    #             errors[field] = "Обязательное поле!"
+    #     if errors:
+    #         raise ValidationError(errors)
 
 
 class Schedule(models.Model):

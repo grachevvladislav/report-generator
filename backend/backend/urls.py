@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path
 
-admin.site.site_header = "CRM Легкость"
+admin.site.site_header = "EMS Легкость"
 admin.site.index_title = "Студия йоги для женщин"
 
 
