@@ -3,11 +3,10 @@ from datetime import datetime
 import pandas as pd
 from asgiref.sync import async_to_sync
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from exceptions import AlreadyExists, ParseFail
 from pandas._typing import ReadCsvBuffer
-
-from .crud import get_employee_by_name
-from .exceptions import AlreadyExists, ParseFail
-from .models import Accrual
+from report.models import Accrual
+from salary.crud import get_employee_by_name
 
 sale_fields = ["Оплачено,\xa0₽", "Инициатор", "Наименование", "Дата оплаты"]
 trainer_fields = [

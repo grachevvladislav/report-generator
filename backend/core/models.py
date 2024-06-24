@@ -27,7 +27,10 @@ class Default(models.Model):
             MinValueValidator(1),
         ],
     )
-    cashier_telegram_id = models.IntegerField("Telegram id")
+    cashier_telegram_id = models.IntegerField("Telegram id для чеков")
+    mark_emails_as_read = models.BooleanField(
+        "Отмечать письма прочитанными", default=False
+    )
 
     async def clean(self):
         """Clean data."""
@@ -70,7 +73,10 @@ class Employee(models.Model):
     inn = models.CharField(
         "ИНН", max_length=12, unique=True, blank=True, null=True
     )
-    email = models.CharField("Email")
+    email = models.CharField("Email", unique=True, blank=True, null=True)
+    tax_registration_date = models.DateField(
+        "Дата регистрации в качестве плательщика НПД", blank=True, null=True
+    )
     tax_regime = models.CharField(
         choices=TaxRegime.choices, default=TaxRegime.CZ
     )

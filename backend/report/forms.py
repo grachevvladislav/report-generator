@@ -1,8 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.forms import forms
-
-from .exceptions import ParseFail
-from .file_parse import sale_report_parsing, trainer_report_parsing
+from exceptions import ParseFail
+from report.file_parse import sale_report_parsing, trainer_report_parsing
 
 
 class TrainerCsvForm(forms.Form):

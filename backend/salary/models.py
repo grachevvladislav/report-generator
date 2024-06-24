@@ -1,122 +1,71 @@
 from decimal import Decimal
 
 from core.models import Employee
-from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from .exceptions import AlreadyExists
 
-
-class SalaryCertificate(models.Model):
-    """SalaryCertificate model."""
+class ContractTemplate(models.Model):
+    """ContractTemplate model."""
 
     class Meta:
-        """SalaryCertificate metaclass."""
+        """ContractTemplate metaclass."""
 
-        verbose_name = "зарплатный акт"
-        verbose_name_plural = "зарплатные акты"
+        verbose_name = "шаблон"
+        verbose_name_plural = "шаблоны договоров"
 
-    number = models.IntegerField("Номер документа", unique=True)
-    start_date = models.DateField("Начало отчётного периода")
-    end_date = models.DateField("Конец отчётного периода")
-
-
-class Accrual(models.Model):
-    """Accrual from FitBase."""
-
-    class Meta:
-        """Accrual metaclass."""
-
-        verbose_name = "начисление"
-        verbose_name_plural = "начисления"
-        unique_together = ("date", "employee", "name", "base", "sum")
-
-    date = models.DateTimeField("Дата начисления")
-    employee = models.ForeignKey(
-        Employee,
-        on_delete=models.CASCADE,
-        related_name="accrual",
-        blank=True,
-        null=True,
-        default=None,
-    )
-    name = models.CharField("Название", blank=True, null=True)
-    base = models.CharField("Основание", blank=True, null=True)
-    sum = models.FloatField("Сумма")
-
-    def __init__(self, *args, **kwargs):
-        """Init method. Added correction for empty lines."""
-        super().__init__(*args, **kwargs)
-        for field in self._meta.get_fields():
-            value = getattr(self, field.attname)
-            if str(value) == "nan" or value == "-":
-                setattr(self, field.attname, None)
+    name = models.CharField("Название")
+    description = models.CharField("Описание", null=True, blank=True)
+    file = models.FileField(null=True, blank=True)
+    file_data = models.BinaryField(null=True)
+    is_active = models.BooleanField("Шаблон активен", default=True)
 
     def __str__(self):
-        return f'{self.date} {self.employee} {self.name or ""} {self.base or ""} {self.sum}'
-
-    def clean(self):
-        """Added check for the existence of a similar entry."""
-        super().clean()
-        if Accrual.objects.filter(
-            date=self.date,
-            employee__id=self.employee.id,
-            name=self.name,
-            base=self.base,
-            sum=self.sum,
-        ).exists():
-            raise AlreadyExists("Запись уже существует")
+        return self.name
 
 
-class Sale(models.Model):
-    """Sale from FitBase."""
-
-    class Meta:
-        """Sale metaclass."""
-
-        verbose_name = "Продажа"
-        verbose_name_plural = "Продажи"
-        unique_together = ("date", "employee", "name", "sum")
-
-    date = models.DateTimeField("Дата оплаты")
-    employee = models.ForeignKey(
-        Employee,
-        on_delete=models.CASCADE,
-        related_name="sale",
-        blank=True,
-        null=True,
-        default=None,
-    )
-    sum = models.FloatField("Сумма")
-    name = models.CharField("Название", blank=True, null=True)
+def get_new_contract_number():
+    last_number = Contract.objects.aggregate(models.Max("number"))[
+        "number__max"
+    ]
+    if last_number:
+        return last_number + 1
+    return 1
 
 
 class Contract(models.Model):
     """Contract model."""
 
     class Meta:
-        """Contract rule metaclass."""
+        """Contract metaclass."""
 
         verbose_name = "договор"
         verbose_name_plural = "договоры"
-
-    class Role(models.TextChoices):
-        """Types of system role."""
-
-        TRAINER = "Тренер", "Тренер"
-        ADMIN = "Администратор", "Администратор"
+        unique_together = ("employee", "template")
 
     employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, related_name="сontract"
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="сontract",
+        verbose_name="Сотрудник",
     )
-
+    template = models.ForeignKey(
+        ContractTemplate,
+        on_delete=models.CASCADE,
+        related_name="сontract",
+        default=None,
+        verbose_name="Шаблон договора",
+    )
     is_active = models.BooleanField("Договор действует", default=True)
-    role = models.CharField(choices=Role.choices, default=Role.TRAINER)
-    tax_registration_date = models.DateField(
-        "Дата регистрации в качестве плательщика НПД", blank=True, null=True
+    original_signed = models.BooleanField("Оригинал подписан", default=False)
+    number = models.IntegerField(
+        "Номер договора",
+        unique=True,
+        default=get_new_contract_number,
+        validators=[
+            MinValueValidator(1),
+        ],
     )
-    number = models.IntegerField("Номер договора", unique=True)
     start_date = models.DateField("Дата заключения договора")
     end_date = models.DateField(
         "Дата окончания договора", blank=True, null=True
@@ -156,41 +105,126 @@ class Contract(models.Model):
         return self.display_name
 
 
-class Rule(models.Model):
-    """Salary rule model."""
+class SalaryCertificate(models.Model):
+    """SalaryCertificate model."""
 
     class Meta:
-        """Salary rule metaclass."""
+        """SalaryCertificate metaclass."""
 
-        verbose_name = "правило"
-        verbose_name_plural = "правила"
+        verbose_name = "зарплатный акт"
+        verbose_name_plural = "зарплатные акты"
 
-    class Type(models.TextChoices):
-        """Types of salary rule."""
+    number = models.IntegerField("Номер документа", unique=True)
+    start_date = models.DateField("Начало отчётного периода")
+    end_date = models.DateField("Конец отчётного периода")
+    original_signed = models.BooleanField("Оригинал подписан", default=False)
+    contract = models.ForeignKey(
+        Contract,
+        on_delete=models.CASCADE,
+        related_name="salary_certificate",
+        verbose_name="договор",
+    )
 
-        RATE = "Ставка", "Ставка"
-        ACCRUAL_AMOUNT = "Сумма начислений", "Сумма начислений"
-        PERCENTAGE_OF_SALAS = (
-            "Процент от личных продаж",
-            "Процент от личных продаж",
-        )
-        HOURLY_PAYMENT = "Почасовая оплата", "Почасовая оплата"
 
-    type = models.CharField(choices=Type.choices, default=Type.RATE)
+class Rate(models.Model):
+    """Rate rule for ContractTemplate."""
+
+    class Meta:
+        """Rate metaclass."""
+
+        verbose_name = "ставка"
+        verbose_name_plural = "Правило: Ставка"
+
     name = models.CharField("Название")
-    rate_value = models.FloatField("Сумма")
-    required_fields = ArrayField(models.CharField(), blank=True, null=True)
+    value = models.IntegerField(
+        "Сумма",
+        validators=[
+            MinValueValidator(0),
+        ],
+    )
+    contract = models.ForeignKey(
+        ContractTemplate, on_delete=models.CASCADE, related_name="rate"
+    )
+
+    def __str__(self):
+        return f"{self.name} {self.value}р."
+
+
+class AmountOfAccrual(models.Model):
+    """
+    AmountOfAccrual rule for ContractTemplate.
+
+    If ContractTemplate object has one or more connections with AmountOfAccrual.
+    -> We look for all accruals for the employee and add required fields.
+    """
+
+    class Meta:
+        """AmountOfAccrual metaclass."""
+
+        verbose_name = "Сумма начислений"
+        verbose_name_plural = "Правило: Сумма начислений"
+        unique_together = ("required_field", "contract")
+
+    required_field = models.CharField(
+        "Обязательное поле", blank=True, null=True
+    )
+    contract = models.ForeignKey(
+        ContractTemplate,
+        on_delete=models.CASCADE,
+        related_name="amount_of_accrual",
+    )
+
+    def __str__(self):
+        return " ".join([self.required_field, self.contract.name])
+
+
+class PercentageOfSales(models.Model):
+    """
+    PercentageOfSales rule for ContractTemplate.
+
+    Percentage of personal sales for the selected period.
+    """
+
+    class Meta:
+        """PercentageOfSales metaclass."""
+
+        verbose_name = "Правило: Процент от личных продаж"
+
+    name = models.CharField("Название")
     percentage_value = models.DecimalField(
         max_digits=4,
         decimal_places=1,
         default=Decimal(0),
         validators=[MinValueValidator(0), MaxValueValidator(100)],
     )
-    contract = models.ForeignKey(
-        Contract,
+    contract = models.OneToOneField(
+        ContractTemplate,
         on_delete=models.CASCADE,
-        related_name="rule",
+        related_name="percentage_of_sales",
     )
 
     def __str__(self):
-        return " ".join([self.type, self.name])
+        return f"{self.name} {self.percentage_value}%"
+
+
+class HourlyPayment(models.Model):
+    """
+    HourlyPayment rule for ContractTemplate.
+
+    Payment for the time of work specified in the schedule.
+    """
+
+    class Meta:
+        """PercentageOfSales metaclass."""
+
+        verbose_name = "Правило: Почасовая ставка"
+
+    name = models.CharField("Название")
+    contract = models.OneToOneField(
+        ContractTemplate,
+        on_delete=models.CASCADE,
+        related_name="hourly_payment",
+    )
+
+    def __str__(self):
+        return self.name

@@ -13,6 +13,8 @@ async def get_missing_dates(add_empty):
     planning_horizon = await sync_to_async(Default.get_default)(
         "planning_horizon"
     )
+    if not planning_horizon:
+        return []
     if add_empty:
         db_set = await (
             sync_to_async(

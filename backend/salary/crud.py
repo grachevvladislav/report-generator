@@ -4,6 +4,7 @@ from asgiref.sync import sync_to_async
 from borb.pdf import PDF, Document
 from core.models import Employee
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Max, Model
 from salary.make_pdf import create_list
 
 
@@ -41,3 +42,13 @@ async def get_employee_by_name(name: str):
     if employee:
         return employee
     raise ObjectDoesNotExist(f"Сотрудник {surname} {name} не добавлен!")
+
+
+def get_new_number(model: Model):
+    def fun():
+        last_number = model.objects.aggregate(Max("number"))["number__max"]
+        if last_number:
+            return last_number + 1
+        return 1
+
+    return fun

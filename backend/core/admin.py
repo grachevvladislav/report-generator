@@ -8,8 +8,6 @@ from utils import add_messages, plural_days
 
 from .crud import get_missing_dates
 from .filters import DateFilter
-
-# EmployeeScheduleFilter
 from .models import BotRequest, Default, Employee, Schedule
 from .views import make_backup
 
@@ -55,6 +53,7 @@ class DefaultAdmin(ExtraButtonsMixin, admin.ModelAdmin):
     list_display = (
         "work_time",
         "planning_horizon",
+        "cashier_telegram_id",
     )
 
     change_list_template = "change_list.html"
@@ -167,13 +166,13 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
                 obj.save()
             messages.success(request, "Успех!")
 
-    # def formfield_for_foreignkey(self, db_field, request, **kwargs):
-    #     """Only administrators can be on the schedule."""
-    #     if db_field.name == "employee":
-    #         kwargs["queryset"] = Employee.objects.filter(
-    #             role__in=[Employee.Role.ADMIN, Employee.Role.OWNER],
-    #         )
-    #     return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Only administrators can be on the schedule."""
+        if db_field.name == "employee":
+            kwargs["queryset"] = Employee.objects.filter(
+                сontract__template__hourly_payment__isnull=False,
+            ).distinct()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 admin.site.register(Employee, EmployeeAdmin)
