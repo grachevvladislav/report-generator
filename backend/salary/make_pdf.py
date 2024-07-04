@@ -12,11 +12,14 @@ from borb.pdf import (
 )
 from bot.constants.exceptions import InnerFail
 from bot.utils import surname_and_initials
+from core.models import Employee
 
 from backend.settings import CUSTOM_FONT
 
+from .models import SalaryCertificate
 
-def create_list(employee: dict) -> Page:
+
+def create_list(document: SalaryCertificate, owner: Employee) -> Page:
     page = Page()
     layout = SingleColumnLayout(page)
     layout.add(
@@ -24,10 +27,10 @@ def create_list(employee: dict) -> Page:
         .add(
             TableCell(
                 Paragraph(
-                    f"Акт №{employee['document_counter']} от "
-                    f"{employee['date']}. "
-                    f"За период с {employee['from']} по {employee['to']}.",
-                    f"За период с {employee['from']} по {employee['to']}",
+                    f"Акт №{document.number} от "
+                    f"{document.date_of_creation}. "
+                    f"За период с {document.start_date.strftime('%d.%m.%Y')} по"
+                    f" {document.end_date.strftime('%d.%m.%Y')}.",
                     font=CUSTOM_FONT,
                     font_size=Decimal(10),
                 ),
@@ -43,32 +46,40 @@ def create_list(employee: dict) -> Page:
 
     layout.add(
         Paragraph(
-            f"Исполнитель: СЗ {employee['fio']}, {employee['inn']}, "
-            f"{employee['address']}, р/с {employee['checking_account']}, "
-            f"{employee['bank']}, {employee['bik']}, к/с "
-            f"{employee['correspondent_account']}\n\nЗаказчик: "
-            f"{employee['customer_details']}\n\nОснование: договор "
-            f"возмездного оказания услуг №{employee['agreement_number']} от "
-            f"{employee['agreement_date']}.",
+            f"Исполнитель: {document.contract.employee.tax_regime} "
+            f"{document.contract.employee.full_name}, "
+            f""
+            f"{document.contract.employee.inn}, "
+            f"{document.contract.employee.address}, р/с "
+            f"{document.contract.employee.checking_account}, "
+            f"{document.contract.employee.bank}, "
+            f"{document.contract.employee.bik}, к/с "
+            f"{document.contract.employee.correspondent_account}\n\n"
+            f"Заказчик: ИП {owner.full_name}, ОГРНИП: {owner.ogrnip}, ИНН: "
+            f"{owner.inn}, {owner.address}, р/с {owner.checking_account} в "
+            f"банке {owner.bank}, БИК {owner.bik}"
+            f"\n\nОснование: Договор "
+            f"возмездного оказания услуг №{document.contract.number} от "
+            f"{document.contract.start_date}.",
             font=CUSTOM_FONT,
             font_size=Decimal(10),
             respect_newlines_in_text=True,
         )
     )
-    if employee["role"] == "Администратор":
+    if document["role"] == "Администратор":
         summ = str(
-            (employee["admin_money"] * employee["percentage_of_sales"] / 100)
-            + employee["admin_work_time"] * employee["admin_by_hours"]
+            (document["admin_money"] * document["percentage_of_sales"] / 100)
+            + document["admin_work_time"] * document["admin_by_hours"]
         )
         table_data = [
             ["№ п/п", "Наименование услуги", "Кол-во", "Ед.", "Цена", "Сумма"],
             [
                 "1",
                 "Административная деятельность",
-                str(employee["admin_work_time"]),
+                str(document["admin_work_time"]),
                 "ч.",
-                str(employee["admin_by_hours"]),
-                str(employee["admin_work_time"] * employee["admin_by_hours"]),
+                str(document["admin_by_hours"]),
+                str(document["admin_work_time"] * document["admin_by_hours"]),
             ],
             [
                 "2",
@@ -76,24 +87,24 @@ def create_list(employee: dict) -> Page:
                 "1",
                 "шт.",
                 str(
-                    employee["admin_money"]
-                    * employee["percentage_of_sales"]
+                    document["admin_money"]
+                    * document["percentage_of_sales"]
                     / 100
                 ),
                 str(
-                    employee["admin_money"]
-                    * employee["percentage_of_sales"]
+                    document["admin_money"]
+                    * document["percentage_of_sales"]
                     / 100
                 ),
             ],
             ["", "", "", "", "Итого:", summ],
             ["", "", "", "", "Без налога\n(НДС)", ""],
         ]
-    elif employee["role"] == "Тренер":
+    elif document["role"] == "Тренер":
         summ = 0
         lines = []
         counter = 0
-        for key, count in employee["conducted_classes"].items():
+        for key, count in document["conducted_classes"].items():
             name, coast = key.split("$")
             counter += 1
             line_summ = float(coast) * float(count)
@@ -109,7 +120,7 @@ def create_list(employee: dict) -> Page:
         ]
     else:
         raise InnerFail(
-            "Неизвестная роль при  создании страницы: " + employee["role"]
+            "Неизвестная роль при  создании страницы: " + document["role"]
         )
     table_separator = len(table_data) - 2
     main_table = FlexibleColumnWidthTable(
@@ -168,8 +179,8 @@ def create_list(employee: dict) -> Page:
     signatures = [
         ["ЗАКАЗЧИК:", "ИСПОЛНИТЕЛЬ:"],
         [
-            f'________________ / {employee["customer_short"]} /\n      Подпись',
-            f'________________ / {surname_and_initials(employee["fio"])} /\n'
+            f'________________ / {document["customer_short"]} /\n      Подпись',
+            f'________________ / {surname_and_initials(document["fio"])} /\n'
             f"        Подпись",
         ],
     ]

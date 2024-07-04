@@ -1,5 +1,6 @@
 import datetime
 
+import dateutil
 from asgiref.sync import sync_to_async
 from django.contrib import messages
 
@@ -33,3 +34,15 @@ def add_messages(request, new_messages):
     for text in new_messages:
         if text not in msg_list:
             messages.error(request, text)
+
+
+def first_day_of_the_previous_month():
+    today = datetime.datetime.today()
+    return today.replace(day=1) + dateutil.relativedelta.relativedelta(
+        months=-1
+    )
+
+
+def last_day_of_the_previous_month():
+    today = datetime.datetime.today()
+    return today.replace(day=1) - datetime.timedelta(days=1)

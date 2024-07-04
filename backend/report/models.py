@@ -35,14 +35,22 @@ class Accrual(models.Model):
                 setattr(self, field.attname, None)
 
     def __str__(self):
-        return f'{self.date} {self.employee} {self.name or ""} {self.base or ""} {self.sum}'
+        return " ".join(
+            filter(
+                None,
+                map(
+                    str,
+                    [self.date, self.employee, self.name, self.base, self.sum],
+                ),
+            )
+        )
 
     def clean(self):
         """Added check for the existence of a similar entry."""
         super().clean()
         if Accrual.objects.filter(
             date=self.date,
-            employee__id=self.employee.id,
+            employee__id=getattr(self.employee, "id", None),
             name=self.name,
             base=self.base,
             sum=self.sum,
@@ -58,7 +66,7 @@ class Sale(models.Model):
 
         verbose_name = "Продажа"
         verbose_name_plural = "Продажи"
-        unique_together = ("date", "employee", "name", "sum")
+        unique_together = ("date", "employee", "name", "sum", "client")
 
     date = models.DateTimeField("Дата оплаты")
     employee = models.ForeignKey(
@@ -69,5 +77,14 @@ class Sale(models.Model):
         null=True,
         default=None,
     )
+    client = models.CharField("Клиент", blank=True, null=True, default=None)
     sum = models.FloatField("Сумма")
     name = models.CharField("Название", blank=True, null=True)
+
+    def __str__(self):
+        return " ".join(
+            filter(
+                None,
+                [self.date, self.employee, self.name, self.client, self.sum],
+            )
+        )

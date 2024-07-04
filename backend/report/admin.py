@@ -1,4 +1,4 @@
-from core.filters import DateFilter
+from core.filters import ScheduleDateFilter
 from django.contrib import admin
 from django.db.models import Sum
 from django.shortcuts import redirect
@@ -6,7 +6,7 @@ from django.template.response import TemplateResponse
 from django.urls import path
 from utils import add_messages
 
-from .forms import TrainerCsvForm
+from .forms import SaleCsvForm, TrainerCsvForm
 from .models import Accrual, Sale
 from .serializers import AccrualSerializer, SaleSerializer
 
@@ -15,7 +15,8 @@ class AccrualAdmin(admin.ModelAdmin):
     """Accrual model admin site."""
 
     list_display = ("date", "employee", "name", "base", "sum")
-    list_filter = (DateFilter,)
+    list_filter = (ScheduleDateFilter,)
+    ordering = ("-date",)
 
     change_list_template = "change_list.html"
     change_form_template = "admin/change_form.html"
@@ -35,7 +36,7 @@ class AccrualAdmin(admin.ModelAdmin):
                 serializer = AccrualSerializer(data=data, many=True)
                 if serializer.is_valid():
                     serializer.save()
-                    return redirect("admin:salary_accrual_changelist")
+                    return redirect("admin:report_accrual_changelist")
                 else:
                     add_messages(
                         request,
@@ -88,7 +89,8 @@ class SaleAdmin(admin.ModelAdmin):
     """Sale model admin site."""
 
     list_display = ("date", "employee", "name", "sum")
-    list_filter = (DateFilter,)
+    list_filter = (ScheduleDateFilter,)
+    ordering = ("-date",)
 
     change_list_template = "change_list.html"
     change_form_template = "admin/change_form.html"
@@ -99,16 +101,16 @@ class SaleAdmin(admin.ModelAdmin):
             **self.admin_site.each_context(request),
             "title": "Загрузка файла отчета о продажах",
             "opts": self.model._meta,
-            "form": TrainerCsvForm(),
+            "form": SaleCsvForm(),
         }
         if request.method == "POST":
-            form = TrainerCsvForm(request.POST, request.FILES)
+            form = SaleCsvForm(request.POST, request.FILES)
             if "db_save" in request.POST:
                 data = request.session.get("uploaded_data", [])
                 serializer = SaleSerializer(data=data, many=True)
                 if serializer.is_valid():
                     serializer.save()
-                    return redirect("admin:salary_accrual_changelist")
+                    return redirect("admin:report_sale_changelist")
                 else:
                     add_messages(
                         request,

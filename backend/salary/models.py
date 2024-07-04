@@ -1,8 +1,14 @@
+import datetime
 from decimal import Decimal
 
 from core.models import Employee
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from utils import (
+    first_day_of_the_previous_month,
+    last_day_of_the_previous_month,
+)
 
 
 class ContractTemplate(models.Model):
@@ -56,7 +62,6 @@ class Contract(models.Model):
         default=None,
         verbose_name="Шаблон договора",
     )
-    is_active = models.BooleanField("Договор действует", default=True)
     original_signed = models.BooleanField("Оригинал подписан", default=False)
     number = models.IntegerField(
         "Номер договора",
@@ -66,43 +71,49 @@ class Contract(models.Model):
             MinValueValidator(1),
         ],
     )
-    start_date = models.DateField("Дата заключения договора")
+    start_date = models.DateField(
+        "Дата заключения договора", default=datetime.datetime.today
+    )
     end_date = models.DateField(
         "Дата окончания договора", blank=True, null=True
     )
 
+    def clean(self):
+        """Validate start | end date."""
+        super().clean()
+        errors = {}
+        if self.end_date and self.start_date > self.end_date:
+            errors["start_date"] = "Дата начала не может быть позже конца!"
+            raise ValidationError(errors)
+
     @property
-    def full_value(self):
-        """Full value for report."""
-        if self.tax_regime == self.TaxRegime.CZ:
-            return (
-                f"{self.tax_regime} {self.employee.surname} "
-                f"{self.employee.name} {self.employee.patronymic}, ИНН: "
-                f"{self.employee.inn}, {self.employee.address}, р/с "
-                f"{self.employee.checking_account}, {self.employee.bank}, БИК: "
-                f"{self.employee.bik}, к/с "
-                f"{self.employee.correspondent_account}"
-            )
-        else:
-            return (
-                f"{self.tax_regime} {self.employee.surname} "
-                f"{self.employee.name} {self.employee.patronymic}, ОГРНИП: "
-                f"{self.ogrnip}, ИНН: {self.employee.inn}, "
-                f"{self.employee.address}, р/с {self.employee.checking_account}"
-                f", {self.employee.bank}, БИК: {self.employee.bik}, к/с "
-                f"{self.employee.correspondent_account}"
-            )
+    def is_active(self):
+        """Current status of the contract."""
+        if self.end_date:
+            return datetime.date.today() <= self.end_date
+        return True
+
+    is_active.fget.boolean = True
 
     @property
     def display_name(self):
         """Admin site display name."""
         if self.is_active:
-            return " ".join([str(self.number), self.employee.full_name])
+            return f"#{self.number} {self.employee.full_name}"
         else:
-            return " ".join([str(self.number), self.employee.full_name, "⛔️"])
+            return f"#{self.number} {self.employee.full_name} ⛔"
 
     def __str__(self):
         return self.display_name
+
+
+def get_new_salary_certificate_number():
+    last_number = SalaryCertificate.objects.aggregate(models.Max("number"))[
+        "number__max"
+    ]
+    if last_number:
+        return last_number + 1
+    return 1
 
 
 class SalaryCertificate(models.Model):
@@ -114,9 +125,20 @@ class SalaryCertificate(models.Model):
         verbose_name = "зарплатный акт"
         verbose_name_plural = "зарплатные акты"
 
-    number = models.IntegerField("Номер документа", unique=True)
-    start_date = models.DateField("Начало отчётного периода")
-    end_date = models.DateField("Конец отчётного периода")
+    number = models.IntegerField(
+        "Номер документа",
+        unique=True,
+        default=get_new_salary_certificate_number,
+    )
+    start_date = models.DateField(
+        "Начало отчётного периода", default=first_day_of_the_previous_month
+    )
+    end_date = models.DateField(
+        "Конец отчётного периода", default=last_day_of_the_previous_month
+    )
+    date_of_creation = models.DateField(
+        "Дата создания", default=datetime.datetime.today
+    )
     original_signed = models.BooleanField("Оригинал подписан", default=False)
     contract = models.ForeignKey(
         Contract,
@@ -124,6 +146,21 @@ class SalaryCertificate(models.Model):
         related_name="salary_certificate",
         verbose_name="договор",
     )
+
+    def __str__(self):
+        value = " ".join(
+            map(
+                str,
+                [
+                    self.number,
+                    self.start_date,
+                    self.contract.employee.full_name,
+                ],
+            )
+        )
+        if self.original_signed:
+            return value
+        return value + " ❗️"
 
 
 class Rate(models.Model):

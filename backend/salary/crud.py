@@ -4,17 +4,15 @@ from asgiref.sync import sync_to_async
 from borb.pdf import PDF, Document
 from core.models import Employee
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Max, Model
 from salary.make_pdf import create_list
 
+from .constants import non_employees_list
 
-def create_pdf(employees: list[Employee], constants: dict) -> io.BytesIO:
+
+def create_pdf(employees: list[Employee]) -> io.BytesIO:
     doc = Document()
     for employee in employees.get_active_employee():
-        constants["document_counter"] += 1
-        employee_dict = employee.to_dict()
-        employee_dict.update(constants)
-        page = create_list(employee_dict)
+        page = create_list(employee)
         doc.add_page(page)
 
     memory_file = io.BytesIO()
@@ -24,9 +22,11 @@ def create_pdf(employees: list[Employee], constants: dict) -> io.BytesIO:
 
 
 async def get_employee_by_name(name: str):
+    if name in non_employees_list:
+        return None
     parts = name.split(" ")
     if len(parts) < 2:
-        raise ObjectDoesNotExist("Некорректный формат имени тренера!")
+        raise ObjectDoesNotExist(f"Некорректный формат: {name}")
     surname = name.split(" ")[0]
     name = name.split(" ")[1]
     if name[1] == ".":
@@ -42,13 +42,3 @@ async def get_employee_by_name(name: str):
     if employee:
         return employee
     raise ObjectDoesNotExist(f"Сотрудник {surname} {name} не добавлен!")
-
-
-def get_new_number(model: Model):
-    def fun():
-        last_number = model.objects.aggregate(Max("number"))["number__max"]
-        if last_number:
-            return last_number + 1
-        return 1
-
-    return fun

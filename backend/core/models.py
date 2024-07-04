@@ -67,6 +67,32 @@ class Employee(models.Model):
         IP = "ИП", "Индивидуальный предприниматель"
         CZ = "СЗ", "Самозанятый"
 
+    base_required_fields = [
+        "surname",
+        "patronymic",
+        "inn",
+        "email",
+        "tax_registration_date",
+        "tax_regime",
+        "address",
+        "checking_account",
+        "bank",
+        "bik",
+        "correspondent_account",
+        "passport_series",
+        "passport_number",
+        "issued_by",
+        "date_of_issue",
+        "department_code",
+        "department_code",
+    ]
+    required_fields_by_tax = {
+        TaxRegime.CZ: [],
+        TaxRegime.IP: [
+            "ogrnip",
+        ],
+    }
+
     surname = models.CharField("Фамилия", blank=True, null=True)
     name = models.CharField("Имя")
     patronymic = models.CharField("Отчество", blank=True, null=True)
@@ -124,7 +150,7 @@ class Employee(models.Model):
         null=True,
     )
     department_code = models.CharField(
-        "Кем выдан", max_length=7, blank=True, null=True
+        "Код подразделения", max_length=7, blank=True, null=True
     )
 
     telegram_id = models.IntegerField(
@@ -133,6 +159,7 @@ class Employee(models.Model):
     is_active = models.BooleanField(default=True)
     is_stuff = models.BooleanField(default=False)
     is_owner = models.BooleanField(default=False)
+    force_save = models.BooleanField(default=False)
 
     @property
     def full_name(self):
@@ -157,36 +184,29 @@ class Employee(models.Model):
     def __str__(self):
         return self.display_name
 
-    # def clean(self):
-    #     """Clean data."""
-    #     if (
-    #         self.id is None
-    #         and self.role is Employee.Role.OWNER.value
-    #         and Employee.objects.filter(role=Employee.Role.OWNER).count() > 0
-    #     ):
-    #         raise ValidationError("Может быть только один владелец!")
-    #     if (
-    #         self.id is None
-    #         and self.role is Employee.Role.CASHIR.value
-    #         and Employee.objects.filter(role=Employee.Role.CASHIR).count() > 0
-    #     ):
-    #         raise ValidationError("Может быть только один кассир!")
-    #     errors = {}
-    #     if self.tax_regime == self.TaxRegime.NOT_TAXED:
-    #         required_fields = [
-    #             "name",
-    #         ]
-    #     else:
-    #         required_fields = base_required_fields
-    #
-    #     if self.tax_regime == self.TaxRegime.IP:
-    #         required_fields.extend(ip_required_fields)
-    #
-    #     for field in required_fields:
-    #         if getattr(self, field) is None:
-    #             errors[field] = "Обязательное поле!"
-    #     if errors:
-    #         raise ValidationError(errors)
+    def clean(self):
+        """Clean data."""
+        if (
+            self.id is None
+            and Employee.objects.filter(is_owner=True).count() > 0
+        ):
+            raise ValidationError("Может быть только один владелец!")
+        errors = {}
+        required_fields = [
+            "name",
+        ]
+        if self.is_stuff or self.force_save:
+            pass
+        else:
+            required_fields.extend(self.base_required_fields)
+            required_fields.extend(
+                self.required_fields_by_tax[self.tax_regime]
+            )
+        for field in required_fields:
+            if getattr(self, field) is None:
+                errors[field] = "Обязательное поле!"
+        if errors:
+            raise ValidationError(errors)
 
 
 class Schedule(models.Model):

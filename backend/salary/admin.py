@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from .filters import SalaryCertificateDateFilter
 from .models import (
     AmountOfAccrual,
     Contract,
@@ -30,6 +31,7 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
         "number",
         "contract",
         ("start_date", "end_date"),
+        "date_of_creation",
         "original_signed",
     ]
     list_display = (
@@ -37,12 +39,14 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
         "contract",
         "original_signed",
     )
+    list_filter = (SalaryCertificateDateFilter,)
 
 
 class ContractAdmin(admin.ModelAdmin):
     """Contract model admin site."""
 
-    list_display = ["number", "employee", "template", "is_active"]
+    list_display = ["display_name", "template", "is_active"]
+    list_filter = ["template"]
 
 
 class RateInLine(admin.TabularInline):
