@@ -74,10 +74,9 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
         file = create_pdf(queryset)
         file_name = datetime.datetime.today().strftime("%d.%m.%Y %H:%M")
         response = HttpResponse(file.read(), content_type="application/x-pdf")
-        response["Content-Disposition"] = (
-            "attachment; ",
-            f"filename='{file_name}.pdf'",
-        )
+        response[
+            "Content-Disposition"
+        ] = f'attachment\x3B filename="{file_name}.pdf"'
         return response
 
 
