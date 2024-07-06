@@ -1,7 +1,5 @@
-import asyncio
 import datetime
 
-from asgiref.sync import async_to_sync, sync_to_async
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -32,9 +30,9 @@ class Default(models.Model):
         "Отмечать письма прочитанными", default=False
     )
 
-    async def clean(self):
+    def clean(self):
         """Clean data."""
-        if self.id is None and await Default.objects.acount() > 0:
+        if self.id is None and Default.objects.acount() > 0:
             raise ValidationError(
                 "Может быть только одна запись с настройками!"
             )
@@ -68,26 +66,23 @@ class Employee(models.Model):
         CZ = "СЗ", "Самозанятый"
 
     base_required_fields = [
-        "surname",
-        "patronymic",
         "inn",
         "email",
-        "tax_registration_date",
         "tax_regime",
         "address",
         "checking_account",
         "bank",
         "bik",
         "correspondent_account",
-        "passport_series",
-        "passport_number",
-        "issued_by",
-        "date_of_issue",
-        "department_code",
-        "department_code",
     ]
     required_fields_by_tax = {
-        TaxRegime.CZ: [],
+        TaxRegime.CZ: [
+            "issued_by",
+            "date_of_issue",
+            "department_code",
+            "passport_series",
+            "passport_number",
+        ],
         TaxRegime.IP: [
             "ogrnip",
         ],
@@ -97,14 +92,20 @@ class Employee(models.Model):
     name = models.CharField("Имя")
     patronymic = models.CharField("Отчество", blank=True, null=True)
     inn = models.CharField(
-        "ИНН", max_length=12, unique=True, blank=True, null=True
+        "ИНН",
+        max_length=12,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="10 или 12 цифр",
     )
-    email = models.CharField("Email", unique=True, blank=True, null=True)
     tax_registration_date = models.DateField(
         "Дата регистрации в качестве плательщика НПД", blank=True, null=True
     )
     tax_regime = models.CharField(
-        choices=TaxRegime.choices, default=TaxRegime.CZ
+        "Режим налогообложения",
+        choices=TaxRegime.choices,
+        default=TaxRegime.CZ,
     )
     ogrnip = models.DecimalField(
         "ОГРНИП",
@@ -113,6 +114,7 @@ class Employee(models.Model):
         blank=True,
         null=True,
         unique=True,
+        help_text="14 цифр",
     )
     address = models.CharField("Адрес, как в паспорте", blank=True, null=True)
     checking_account = models.DecimalField(
@@ -123,8 +125,10 @@ class Employee(models.Model):
         blank=True,
         null=True,
     )
-    bank = models.CharField("Название банка", blank=True, null=True)
-    bik = models.CharField("БИК", blank=True, null=True)
+    bank = models.CharField(
+        "Название банка", blank=True, null=True, help_text="ПАО ВТБ"
+    )
+    bik = models.CharField("БИК", blank=True, null=True, help_text="9 цифр")
     correspondent_account = models.DecimalField(
         "Кор. счёт", max_digits=20, decimal_places=0, blank=True, null=True
     )
@@ -136,9 +140,14 @@ class Employee(models.Model):
         ],
         blank=True,
         null=True,
+        help_text="4520 (4 цифр)",
     )
     passport_number = models.CharField(
-        "Номер паспорта", max_length=6, blank=True, null=True
+        "Номер паспорта",
+        max_length=6,
+        blank=True,
+        null=True,
+        help_text="123342 (6 цифр)",
     )
     issued_by = models.CharField("Кем выдан", blank=True, null=True)
     date_of_issue = models.DateField(
@@ -150,16 +159,48 @@ class Employee(models.Model):
         null=True,
     )
     department_code = models.CharField(
-        "Код подразделения", max_length=7, blank=True, null=True
+        "Код подразделения",
+        max_length=6,
+        blank=True,
+        null=True,
+        help_text="660003 (6 цифр)",
     )
-
+    email = models.CharField(
+        "Email",
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="john.smith@example.com",
+    )
     telegram_id = models.IntegerField(
-        "Telegram id", blank=True, null=True, unique=True
+        "Telegram id",
+        blank=True,
+        null=True,
+        unique=True,
+        help_text="1234567890 (10 цифр)",
     )
-    is_active = models.BooleanField(default=True)
-    is_stuff = models.BooleanField(default=False)
-    is_owner = models.BooleanField(default=False)
-    force_save = models.BooleanField(default=False)
+    gdpr_is_signed = models.BooleanField("Обработка ПД", default=False)
+    is_active = models.BooleanField("Сотрудник активен", default=True)
+    is_stuff = models.BooleanField("Права суперпользователя", default=False)
+    is_owner = models.BooleanField("Владелец", default=False)
+
+    def for_doc(self):
+        """Get complete information to create a document."""
+        if self.tax_regime == self.TaxRegime.CZ:
+            return (
+                f"{self.tax_regime} {self.full_name}, ИНН: {self.inn}, "
+                f"{self.address}, р/с {self.checking_account}, "
+                f"{self.bank}, БИК: {self.bik}, к/с "
+                f"{self.correspondent_account}\n\n"
+            )
+        if self.tax_regime == self.TaxRegime.IP:
+            return (
+                f"{self.tax_regime} {self.full_name}, ОГРНИП: {self.ogrnip}, "
+                f"ИНН: {self.inn}, "
+                f"{self.address}, р/с {self.checking_account}, "
+                f"{self.bank}, БИК: {self.bik}, к/с "
+                f"{self.correspondent_account}\n\n"
+            )
 
     @property
     def full_name(self):
@@ -174,15 +215,12 @@ class Employee(models.Model):
         return f"{self.surname} {self.name[0]}."
 
     @property
-    def display_name(self):
-        """Admin site display name."""
-        if self.is_active:
-            return self.full_name
-        else:
-            return " ".join([self.full_name, "⛔️"])
+    def short_name(self) -> str:
+        """Last name I.O."""
+        return f"{self.surname} {self.name[0]}.{self.patronymic[0]}."
 
     def __str__(self):
-        return self.display_name
+        return self.full_name
 
     def clean(self):
         """Clean data."""
@@ -194,8 +232,10 @@ class Employee(models.Model):
         errors = {}
         required_fields = [
             "name",
+            "surname",
+            "patronymic",
         ]
-        if self.is_stuff or self.force_save:
+        if self.is_stuff:
             pass
         else:
             required_fields.extend(self.base_required_fields)
@@ -236,7 +276,7 @@ class Schedule(models.Model):
     )
 
     def __str__(self):
-        return async_to_sync(self.full_string_async)(full=True)
+        return self.full_string(full=True)
 
     def _complete_symbol(self) -> str:
         if datetime.date.today() > self.date:
@@ -244,7 +284,6 @@ class Schedule(models.Model):
         else:
             return "☑️"
 
-    @sync_to_async
     def get_employee_name(self):
         """Get key name if employee exist."""
         if self.employee:
@@ -252,10 +291,10 @@ class Schedule(models.Model):
         else:
             return "----"
 
-    async def full_string_async(self, full: bool = False) -> str:
+    def full_string(self, full: bool = False) -> str:
         """Return all info in string."""
         if full:
-            employee_name = await asyncio.gather(self.get_employee_name())
+            employee_name = self.get_employee_name()
             return " ".join(
                 [
                     self._complete_symbol(),
@@ -267,10 +306,6 @@ class Schedule(models.Model):
             return " ".join(
                 [self._complete_symbol(), self.date.strftime("%d %B")]
             )
-
-    def full_string(self, full: bool = False) -> str:
-        """Return all info in string (sync)."""
-        return async_to_sync(self.full_string_async)()
 
     full_string.short_description = "Дата"
 

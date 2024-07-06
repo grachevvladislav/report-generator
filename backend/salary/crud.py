@@ -9,10 +9,11 @@ from salary.make_pdf import create_list
 from .constants import non_employees_list
 
 
-def create_pdf(employees: list[Employee]) -> io.BytesIO:
+def create_pdf(сertificates) -> io.BytesIO:
     doc = Document()
-    for employee in employees.get_active_employee():
-        page = create_list(employee)
+    owner = Employee.objects.filter(is_owner=True).first()
+    for certificate in сertificates:
+        page = create_list(certificate, owner)
         doc.add_page(page)
 
     memory_file = io.BytesIO()

@@ -1,5 +1,10 @@
-from django.contrib import admin
+import datetime
 
+from core.models import Employee
+from django.contrib import admin
+from django.http import HttpResponse
+
+from .crud import create_pdf
 from .filters import SalaryCertificateDateFilter
 from .models import (
     AmountOfAccrual,
@@ -27,26 +32,72 @@ class ActivitieTypeAdmin(admin.ModelAdmin):
 class SalaryCertificateAdmin(admin.ModelAdmin):
     """SalaryCertificate model admin site."""
 
-    fields = [
+    actions = ("download_document",)
+    fields = (
         "number",
         "contract",
         ("start_date", "end_date"),
         "date_of_creation",
         "original_signed",
-    ]
-    list_display = (
-        "number",
-        "contract",
+    )
+    list_display = ("admin_name", "contract")
+    list_filter = (
+        SalaryCertificateDateFilter,
+        "contract__template",
         "original_signed",
     )
-    list_filter = (SalaryCertificateDateFilter,)
+    ordering = ("-number",)
+
+    # def changelist_view(self, request, extra_context=None):
+    #     """Add custom button."""
+    #     extra_context = extra_context or {}
+    #     extra_context["buttons"] = [
+    #         {"url": "admin:download_document", "name": "Вставить расписание"},
+    #     ]
+    #     return super().changelist_view(request, extra_context=extra_context)
+    #
+    # def get_urls(self):
+    #     """Add insert_schedule endpoint."""
+    #     urls = super().get_urls()
+    #     custom_urls = [
+    #         path(
+    #             "download_document/",
+    #             self.download_document,
+    #             name="download_document",
+    #         ),
+    #     ]
+    #     return custom_urls + urls
+
+    @admin.action(description="Скачать документ")
+    def download_document(self, request, queryset):
+        """Download document."""
+        file = create_pdf(queryset)
+        file_name = datetime.datetime.today().strftime("%d.%m.%Y %H:%M")
+        response = HttpResponse(file.read(), content_type="application/x-pdf")
+        response["Content-Disposition"] = (
+            "attachment; ",
+            f"filename='{file_name}.pdf'",
+        )
+        return response
 
 
 class ContractAdmin(admin.ModelAdmin):
     """Contract model admin site."""
 
-    list_display = ["display_name", "template", "is_active"]
-    list_filter = ["template"]
+    list_display = (
+        "admin_name",
+        "template",
+        "original_signed",
+        "is_active",
+    )
+    list_filter = ("template", "original_signed")
+    ordering = ("-number",)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Only administrators can be on the schedule."""
+        if db_field.name == "employee":
+            kwargs["queryset"] = Employee.objects.all().order_by("surname")
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class RateInLine(admin.TabularInline):
@@ -80,14 +131,14 @@ class HourlyPaymentInLine(admin.TabularInline):
 class ContractTemplateAdmin(admin.ModelAdmin):
     """ContractTemplate model admin site."""
 
-    list_display = ["name", "is_active"]
+    list_display = ("name", "is_active")
 
-    inlines = [
+    inlines = (
         AmountOfAccrualInLine,
         RateInLine,
         PercentageOfSalesInLine,
         HourlyPaymentInLine,
-    ]
+    )
 
     def save_model(self, request, obj, form, change):
         """Save bytes to the database."""

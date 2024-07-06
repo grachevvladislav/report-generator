@@ -1,5 +1,4 @@
 from admin_extra_buttons.mixins import ExtraButtonsMixin
-from asgiref.sync import async_to_sync
 from django.contrib import admin, messages
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
@@ -15,14 +14,17 @@ from .views import make_backup
 class EmployeeAdmin(admin.ModelAdmin):
     """Employee admin site."""
 
-    list_display = ("full_name", "is_active", "force_save")
+    list_display = (
+        "full_name",
+        "gdpr_is_signed",
+    )
     search_fields = (
         "tax_regime",
         "is_active",
         "inn",
         "address",
     )
-    ordering = ("-is_active", "-force_save", "surname", "name", "patronymic")
+    ordering = ("-is_active", "surname", "name", "patronymic")
     list_filter = ("is_active",)
 
 
@@ -92,9 +94,7 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
             Schedule.objects.bulk_create(
                 [
                     Schedule(date=date)
-                    for date in async_to_sync(get_missing_dates)(
-                        add_empty=True
-                    )
+                    for date in get_missing_dates(add_empty=True)
                 ]
             )
             messages.success(request, "Записи добавлены!")
@@ -105,7 +105,7 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
                 "title": "Вставить расписание",
                 "text": f"Добавить недостающие записи на {plural_days(Default.get_default('planning_horizon'))}?",
                 "title2": "Создаваемые записи",
-                "objects": async_to_sync(get_missing_dates)(add_empty=True),
+                "objects": get_missing_dates(add_empty=True),
                 "opts": self.model._meta,
             }
             return TemplateResponse(request, "confirm.html", context)
@@ -124,7 +124,7 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
 
     def changelist_view(self, request, extra_context=None):
         """Add notice of deficiencies in next 30 day's planning."""
-        difference = async_to_sync(get_missing_dates)(add_empty=False)
+        difference = get_missing_dates(add_empty=False)
         if difference:
             grouped_dates = []
             current_group = [difference[0]]

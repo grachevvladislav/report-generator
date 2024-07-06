@@ -15,7 +15,7 @@ class AccrualAdmin(admin.ModelAdmin):
     """Accrual model admin site."""
 
     list_display = ("date", "employee", "name", "base", "sum")
-    list_filter = (ScheduleDateFilter,)
+    list_filter = (ScheduleDateFilter, "employee")
     ordering = ("-date",)
 
     change_list_template = "change_list.html"

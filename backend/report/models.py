@@ -48,13 +48,16 @@ class Accrual(models.Model):
     def clean(self):
         """Added check for the existence of a similar entry."""
         super().clean()
-        if Accrual.objects.filter(
-            date=self.date,
-            employee__id=getattr(self.employee, "id", None),
-            name=self.name,
-            base=self.base,
-            sum=self.sum,
-        ).exists():
+        if (
+            not self.id
+            and Accrual.objects.filter(
+                date=self.date,
+                employee__id=getattr(self.employee, "id", None),
+                name=self.name,
+                base=self.base,
+                sum=self.sum,
+            ).exists()
+        ):
             raise AlreadyExists("Запись уже существует")
 
 
@@ -83,8 +86,17 @@ class Sale(models.Model):
 
     def __str__(self):
         return " ".join(
-            filter(
-                None,
-                [self.date, self.employee, self.name, self.client, self.sum],
+            map(
+                str,
+                filter(
+                    None,
+                    [
+                        self.date,
+                        self.employee,
+                        self.name,
+                        self.client,
+                        self.sum,
+                    ],
+                ),
             )
         )

@@ -8,43 +8,33 @@ from utils import append_data
 from .models import Default, Employee, Schedule
 
 
-async def get_missing_dates(add_empty):
+def get_missing_dates(add_empty):
     start_date = datetime.datetime.now().date()
-    planning_horizon = await sync_to_async(Default.get_default)(
-        "planning_horizon"
-    )
+    planning_horizon = Default.get_default("planning_horizon")
     if not planning_horizon:
         return []
     if add_empty:
-        db_set = await (
-            sync_to_async(
-                lambda: set(
-                    Schedule.objects.filter(
-                        date__range=[
-                            start_date,
-                            append_data(start_date, days=planning_horizon),
-                        ],
-                    )
-                    .values_list("date", flat=True)
-                    .distinct()
-                )
-            )()
+        db_set = (
+            Schedule.objects.filter(
+                date__range=[
+                    start_date,
+                    append_data(start_date, days=planning_horizon),
+                ],
+            )
+            .values_list("date", flat=True)
+            .distinct()
         )
     else:
-        db_set = await (
-            sync_to_async(
-                lambda: set(
-                    Schedule.objects.filter(
-                        date__range=[
-                            start_date,
-                            append_data(start_date, days=planning_horizon),
-                        ],
-                        employee__isnull=False,
-                    )
-                    .values_list("date", flat=True)
-                    .distinct()
-                )
-            )()
+        db_set = (
+            Schedule.objects.filter(
+                date__range=[
+                    start_date,
+                    append_data(start_date, days=planning_horizon),
+                ],
+                employee__isnull=False,
+            )
+            .values_list("date", flat=True)
+            .distinct()
         )
     all_days = [
         append_data(start_date, days=date) for date in range(planning_horizon)
@@ -86,7 +76,7 @@ async def get_schedule(
         ):
             message += "------------\n"
         previous = day
-        message += await day.full_string_async(full=not employee)
+        message += day.full_string(full=not employee)
         message += "\n"
     if not previous:
         message += "Пока нет расписания на выбранный период"

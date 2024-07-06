@@ -32,7 +32,7 @@ services:
       - 5432:5432
 
   bot:
-    image: grachevvladislav/report-generator:latest
+    build: /app/.
     container_name: report-generator-bot
     depends_on:
       - redis
@@ -43,7 +43,7 @@ services:
       - .env
 
   django:
-    image: grachevvladislav/report-generator:latest
+    build: .
     container_name: report-generator-django
     depends_on:
       - redis
