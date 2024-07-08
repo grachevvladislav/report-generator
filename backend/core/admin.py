@@ -100,7 +100,7 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
                 month = int(form.cleaned_data["month"])
                 year = int(form.cleaned_data["year"])
                 last_day = get_last_days_of_the_month(year=year, month=month)
-                for day in range(1, last_day):
+                for day in range(1, last_day + 1):
                     try:
                         Schedule.objects.create(
                             date=datetime.date(day=day, month=month, year=year)

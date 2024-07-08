@@ -62,6 +62,9 @@ def last_day_of_the_previous_month():
 
 
 def get_last_days_of_the_month(year, month):
-    end_date = datetime.date(day=1, month=month + 1, year=year)
+    if month == 12:
+        end_date = datetime.date(day=1, month=1, year=year + 1)
+    else:
+        end_date = datetime.date(day=1, month=month + 1, year=year)
     end_date -= datetime.timedelta(days=1)
     return end_date.day
