@@ -6,6 +6,6 @@ RUN apt-get update && \
 RUN sed -i -e 's/# ru_RU.UTF-8 UTF-8/ru_RU.UTF-8 UTF-8/' /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales
 WORKDIR /app
-COPY backend/bot/ /app/backend
-COPY files/ /app/files
+COPY backend/ /app
+COPY backend/files/ /app/files
 RUN pip3 install -r /app/files/requirements.txt --no-cache-dir

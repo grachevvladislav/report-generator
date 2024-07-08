@@ -1,4 +1,5 @@
 import locale
+import os
 from pathlib import Path
 
 import environ
@@ -6,13 +7,16 @@ from borb.pdf.canvas.font.simple_font.true_type_font import TrueTypeFont
 from dotenv import find_dotenv
 
 env = environ.Env()
-if DEBUG := env.bool("DEBUG", default=True):
+
+DEBUG = env.bool("DEBUG", default=True)
+if DEBUG:
     environ.Env.read_env(find_dotenv(".env", raise_error_if_not_found=True))
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = env.str("SECRET_KEY")
 
+CSRF_TRUSTED_ORIGINS = ["http://localhost", "http://185.198.152.202"]
 ALLOWED_HOSTS = ["*"]
 
 
@@ -95,7 +99,9 @@ USE_I18N = True
 
 USE_TZ = False
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

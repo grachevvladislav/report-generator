@@ -38,7 +38,7 @@ services:
       - redis
       - db
     restart: always
-    entrypoint: CMD python /app/backend/manage.py bot
+    entrypoint: python /app/manage.py bot
     env_file:
       - .env
 
@@ -49,10 +49,27 @@ services:
       - redis
       - db
     restart: always
-    entrypoint: gunicorn notification_service.wsgi --bind 0.0.0.0:8000
+    volumes:
+      - static_value:/app/static/
+      - media_value:/app/media/
+    entrypoint: gunicorn backend.wsgi --bind 0.0.0.0:8000
     env_file:
       - .env
 
+  nginx:
+    image: nginx:1.21.3-alpine
+    container_name: report-generator-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./backend/files/default.conf:/etc/nginx/conf.d/default.conf
+      - static_value:/var/html/static/
+      - media_value:/var/html/media/
+    depends_on:
+      - django
+
 volumes:
+  static_value:
+  media_value:
   redis_volume:
   postgres_data:
