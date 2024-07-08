@@ -53,7 +53,3 @@ start_keyboard = keyboard_generator([[Buttons.TODAY]])
 closing_confirmation_keyboard = keyboard_generator([[Buttons.CONFIRMATION]])
 
 close_check_keyboard = keyboard_generator([[Buttons.CHECK_IS_READY]])
-
-stuff_menu_keyboard = keyboard_generator(
-    [[Buttons.SCHEDULE, Buttons.CREATE_REPORT]]
-)

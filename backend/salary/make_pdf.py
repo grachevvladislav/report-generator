@@ -46,8 +46,8 @@ def create_list(document: SalaryCertificate, owner: Employee) -> Page:
 
     layout.add(
         Paragraph(
-            f"Исполнитель: {document.contract.employee.for_doc()}\n"
-            f"Заказчик: {owner.for_doc()}\n"
+            f"Исполнитель: {document.contract.employee.for_doc()}\n\n"
+            f"Заказчик: {owner.for_doc()}\n\n"
             f"Основание: Договор "
             f"возмездного оказания услуг №{document.contract.number} от "
             f"{document.contract.start_date.strftime(date_pattern)}г.",

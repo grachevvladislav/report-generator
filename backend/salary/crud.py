@@ -2,7 +2,7 @@ import io
 
 from borb.pdf import PDF, Document
 from core.models import Employee
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
 from salary.make_pdf import create_list
 from utils import (
@@ -56,7 +56,6 @@ def create_documents_for_last_month():
         Q(end_date__gte=last_day_of_the_previous_month()) | Q(end_date=None),
         start_date__lte=last_day_of_the_previous_month(),
     )
-    print(active_contracts)
     counter = get_new_salary_certificate_number()
     docs = []
     for contract in active_contracts:
@@ -70,6 +69,11 @@ def create_documents_for_last_month():
             start_date=start_date,
             end_date=last_day_of_the_previous_month(),
         )
-        docs.append(doc)
-        counter += 1
+        try:
+            doc.full_clean()
+        except ValidationError:
+            continue
+        else:
+            docs.append(doc)
+            counter += 1
     return docs

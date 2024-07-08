@@ -47,7 +47,7 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
         "date_of_creation",
         "original_signed",
     )
-    list_display = ("admin_name", "contract")
+    list_display = ("admin_name", "contract", "admin_sum")
     list_filter = (
         SalaryCertificateDateFilter,
         "contract__template",

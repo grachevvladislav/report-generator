@@ -1,12 +1,12 @@
 import datetime
 from decimal import Decimal
 
-from core.models import Employee
+from core.models import Employee, Schedule
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.functions import Concat
-from report.models import Accrual
+from report.models import Accrual, Sale
 from utils import (
     first_day_of_the_previous_month,
     last_day_of_the_previous_month,
@@ -38,8 +38,8 @@ class Table:
                     full_name,
                     count,
                     unit,
-                    sum,
-                    count * sum,
+                    "{0:.2f}".format(sum),
+                    "{0:.2f}".format(count * sum),
                 ],
             )
         )
@@ -48,7 +48,7 @@ class Table:
         """Get data for doc creation function."""
         return {
             "table": self.lines,
-            "sum": str(self.full_sum),
+            "sum": "{0:.2f}".format(self.full_sum),
         }
 
 
@@ -242,6 +242,7 @@ class SalaryCertificate(models.Model):
         """Get table data for doc."""
         table = Table()
         # Accrual data
+        # Need to add date filter
         required_fields = AmountOfAccrual.objects.filter(
             contract=self.contract.template
         )
@@ -249,7 +250,7 @@ class SalaryCertificate(models.Model):
             query = (
                 Accrual.objects.filter(
                     employee=self.contract.employee,
-                    date__range=[self.start_date, self.end_date],
+                    date__date__range=[self.start_date, self.end_date],
                 )
                 .values("employee")
                 .annotate(
@@ -290,13 +291,53 @@ class SalaryCertificate(models.Model):
         rates = Rate.objects.filter(contract=self.contract.template)
         if rates:
             for rate in rates:
-                print(rate)
+                table.add_line(
+                    full_name=rate.name, count=1, unit="шт.", sum=rate.value
+                )
+        # PercentageOfSales date
         percent = PercentageOfSales.objects.filter(
             contract=self.contract.template
         ).first()
         if percent:
-            print(percent)
-
+            query = (
+                Sale.objects.filter(
+                    employee=self.contract.employee,
+                    date__date__range=[self.start_date, self.end_date],
+                )
+                .values("employee")
+                .annotate(
+                    result=models.Sum("sum"),
+                )
+                .values_list("result", flat=True)
+            )
+            table.add_line(
+                full_name=percent.name,
+                count=1,
+                unit="шт.",
+                sum=query[0] * float(percent.percentage_value) / 100,
+            )
+        # HourlyPayment
+        payment = HourlyPayment.objects.filter(
+            contract=self.contract.template
+        ).first()
+        if payment:
+            query = (
+                Schedule.objects.filter(
+                    employee=self.contract.employee,
+                    date__range=[self.start_date, self.end_date],
+                )
+                .values("employee")
+                .annotate(
+                    result=models.Sum("time"),
+                )
+                .values_list("result", flat=True)
+            )
+            table.add_line(
+                full_name=payment.name,
+                count=query[0],
+                unit="ч.",
+                sum=payment.value,
+            )
         return table.as_dict()
 
     def admin_name(self):
@@ -308,8 +349,18 @@ class SalaryCertificate(models.Model):
 
     admin_name.short_description = "Номер"
 
+    def admin_sum(self):
+        """Total amount."""
+        return "{0:,.2f} р.".format(Decimal(self.get_data()["sum"])).replace(
+            ",", " "
+        )
+
     def __str__(self):
-        value = f"#{self.number} от {self.date_of_creation.strftime(date_pattern)} {self.contract.template} {self.contract.employee.full_name}"
+        value = (
+            f"#{self.number} от "
+            f"{self.date_of_creation.strftime(date_pattern)} "
+            f"{self.contract.template} {self.contract.employee.full_name}"
+        )
         if self.original_signed:
             return value
         return value + " ❗️"
@@ -325,7 +376,7 @@ class Rate(models.Model):
         verbose_name_plural = "Правило: Ставка"
 
     name = models.CharField("Название")
-    value = models.IntegerField(
+    value = models.FloatField(
         "Сумма",
         validators=[
             MinValueValidator(0),
@@ -425,6 +476,7 @@ class HourlyPayment(models.Model):
     contract = models.OneToOneField(
         ContractTemplate,
         on_delete=models.CASCADE,
+        unique=True,
         related_name="hourly_payment",
     )
 

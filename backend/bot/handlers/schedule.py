@@ -1,13 +1,14 @@
 import datetime
 import re
 
-from bot.constants.constants import data_button_pattern, months
 from bot.constants.keyboards import Buttons, keyboard_generator
 from bot.constants.states import States
 from bot.utils import send_or_edit_message
 from core.crud import get_schedule
 from core.models import Employee
 from dateutil.relativedelta import relativedelta
+
+from constants import data_button_pattern, months
 
 
 async def show_schedule(update, context):
@@ -34,7 +35,7 @@ async def show_schedule(update, context):
     employee = await Employee.objects.aget(
         telegram_id=update.effective_chat["id"]
     )
-    if employee.role == Employee.Role.STUFF:
+    if employee.is_stuff:
         buttons.append([Buttons.MENU])
         message = await get_schedule(data_range)
     elif employee.role == Employee.Role.ADMIN:

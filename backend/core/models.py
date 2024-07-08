@@ -191,7 +191,7 @@ class Employee(models.Model):
                 f"{self.tax_regime} {self.full_name}, ИНН: {self.inn}, "
                 f"{self.address}, р/с {self.checking_account}, "
                 f"{self.bank}, БИК: {self.bik}, к/с "
-                f"{self.correspondent_account}\n\n"
+                f"{self.correspondent_account}"
             )
         if self.tax_regime == self.TaxRegime.IP:
             return (
@@ -199,7 +199,7 @@ class Employee(models.Model):
                 f"ИНН: {self.inn}, "
                 f"{self.address}, р/с {self.checking_account}, "
                 f"{self.bank}, БИК: {self.bik}, к/с "
-                f"{self.correspondent_account}\n\n"
+                f"{self.correspondent_account}"
             )
 
     @property
@@ -275,8 +275,6 @@ class Schedule(models.Model):
     )
     time = models.FloatField(
         "Рабочее время",
-        blank=True,
-        null=True,
         default=Default.get_default("work_time"),
     )
     second_employee = models.BooleanField(

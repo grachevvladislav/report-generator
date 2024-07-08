@@ -1,16 +1,10 @@
 import datetime
 
 import dateutil
-from asgiref.sync import sync_to_async
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 
 from constants import months_int
-
-
-@sync_to_async
-def get_related_object(obj, related):
-    return getattr(obj, related)
 
 
 def add_messages(request, new_messages):

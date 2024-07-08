@@ -1,10 +1,6 @@
 import datetime
 
-from bot.constants.keyboards import (
-    Buttons,
-    start_keyboard,
-    stuff_menu_keyboard,
-)
+from bot.constants.keyboards import Buttons, start_keyboard
 from bot.constants.states import States
 from bot.handlers.schedule import show_schedule
 from bot.handlers.stuff import report_menu
@@ -15,7 +11,6 @@ from telegram.ext import (
     CommandHandler,
     ConversationHandler,
 )
-from utils import get_related_object
 
 
 async def start(update, context):
@@ -42,15 +37,8 @@ async def start(update, context):
         )
         return States.PERMISSION_DENIED
     else:
-        if await get_related_object(employee, "role") == Employee.Role.ADMIN:
-            return show_schedule(update, context)
-        elif employee.role == Employee.Role.STUFF:
-            await send_or_edit_message(
-                update,
-                "Управление ботом:",
-                reply_markup=stuff_menu_keyboard,
-            )
-            return States.STUFF_MENU
+        if employee.is_stuff or employee.сontract.template.hourly_payment:
+            return await show_schedule(update, context)
 
 
 start_handler = CommandHandler("start", start)

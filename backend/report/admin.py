@@ -15,6 +15,7 @@ class AccrualAdmin(admin.ModelAdmin):
     """Accrual model admin site."""
 
     list_display = ("date", "employee", "name", "base", "sum")
+    # need to add "employee" filter
     list_filter = (ScheduleDateFilter, "employee")
     ordering = ("-date",)
 
@@ -89,7 +90,8 @@ class SaleAdmin(admin.ModelAdmin):
     """Sale model admin site."""
 
     list_display = ("date", "employee", "name", "sum")
-    list_filter = (ScheduleDateFilter,)
+    # need to add employee filter
+    list_filter = (ScheduleDateFilter, "employee")
     ordering = ("-date",)
 
     change_list_template = "change_list.html"
