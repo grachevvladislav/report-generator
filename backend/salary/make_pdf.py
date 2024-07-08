@@ -10,10 +10,10 @@ from borb.pdf import (
     SingleColumnLayout,
     TableCell,
 )
+from constants import date_pattern
 from core.models import Employee
 
 from backend.settings import CUSTOM_FONT
-from constants import date_pattern
 
 from .models import SalaryCertificate
 
