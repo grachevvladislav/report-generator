@@ -26,9 +26,6 @@ class Default(models.Model):
         ],
     )
     cashier_telegram_id = models.IntegerField("Telegram id для чеков")
-    mark_emails_as_read = models.BooleanField(
-        "Отмечать письма прочитанными", default=False
-    )
 
     def clean(self):
         """Clean data."""
@@ -282,7 +279,12 @@ class Schedule(models.Model):
     )
 
     def __str__(self):
-        return self.full_string(full=True)
+        return " ".join(
+            [
+                self._complete_symbol(),
+                self.date.strftime("%d %B"),
+            ]
+        )
 
     def _complete_symbol(self) -> str:
         if datetime.date.today() > self.date:
@@ -296,22 +298,14 @@ class Schedule(models.Model):
             return "-"
         return self.time
 
-    def get_employee_name(self):
-        """Get key name if employee exist."""
-        if self.employee:
-            return self.employee.key_name
-        else:
-            return "----"
-
     def full_string(self, full: bool = False) -> str:
         """Return all info in string."""
         if full:
-            employee_name = self.get_employee_name()
             return " ".join(
                 [
                     self._complete_symbol(),
                     self.date.strftime("%d %B"),
-                    employee_name[0],
+                    self.employee.short_name,
                 ]
             )
         else:

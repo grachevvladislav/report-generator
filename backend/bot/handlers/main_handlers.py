@@ -3,7 +3,6 @@ import datetime
 from bot.constants.keyboards import Buttons, start_keyboard
 from bot.constants.states import States
 from bot.handlers.schedule import show_schedule
-from bot.handlers.stuff import report_menu
 from bot.utils import PATTERN, send_or_edit_message
 from core.models import BotRequest, Employee
 from telegram.ext import (
@@ -55,24 +54,9 @@ main_handler = ConversationHandler(
                 start, pattern=PATTERN.format(Buttons.TODAY.name)
             ),
         ],
-        States.STUFF_MENU: [
-            CallbackQueryHandler(
-                show_schedule, pattern=PATTERN.format(Buttons.SCHEDULE.name)
-            ),
-            CallbackQueryHandler(
-                report_menu,
-                pattern=PATTERN.format(Buttons.CREATE_REPORT.name),
-            ),
-            CallbackQueryHandler(
-                start, pattern=PATTERN.format(Buttons.MENU.name)
-            ),
-        ],
         States.SCHEDULE: [
             CallbackQueryHandler(
                 show_schedule, pattern=PATTERN.format(r"[0-9]{2}\.[0-9]{4}")
-            ),
-            CallbackQueryHandler(
-                start, pattern=PATTERN.format(Buttons.MENU.name)
             ),
         ],
     },

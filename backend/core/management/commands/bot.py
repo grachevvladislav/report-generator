@@ -1,3 +1,4 @@
+from asgiref.sync import async_to_sync
 from bot.handlers.main_handlers import main_handler
 from bot.handlers.notifications import (
     add_pay_notifications,
@@ -37,6 +38,6 @@ class Command(BaseCommand):
             .build()
         )
         if settings.CHECK_MAIL:
-            add_pay_notifications(app)
+            async_to_sync(add_pay_notifications)(app)
         app.add_handlers([main_handler, notification_handler])
         app.run_polling()

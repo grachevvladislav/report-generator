@@ -36,9 +36,8 @@ async def show_schedule(update, context):
         telegram_id=update.effective_chat["id"]
     )
     if employee.is_stuff:
-        buttons.append([Buttons.MENU])
         message = await get_schedule(data_range)
-    elif employee.role == Employee.Role.ADMIN:
+    elif employee.сontract.template.hourly_payment:
         message = await get_schedule(data_range, employee)
     else:
         message = "Для вашей роли не доступно расписание."

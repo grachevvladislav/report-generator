@@ -6,10 +6,6 @@ class States(str, enum.Enum):
 
     PERMISSION_DENIED = "permission_denied"
 
-    STUFF_MENU = "stuff_menu"
-    CREATE_REPORT = "waiting_for_file"
-    CHECK_FILE = "check_file"
-
     SCHEDULE = "schedule"
 
     WAITING_FOR_PAYMENT = "waiting_for_payment"

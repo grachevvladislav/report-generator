@@ -54,10 +54,10 @@ def from_subj_decode(msg_from_subj):
 
 def get_payments():
     result = []
-    with imaplib.IMAP4_SSL(settings.imap_ssl_host.get_secret_value()) as imap:
+    with imaplib.IMAP4_SSL(settings.IMAP_SSL_HOST) as imap:
         status, _ = imap.login(
-            settings.imap_username.get_secret_value(),
-            settings.imap_password.get_secret_value(),
+            settings.IMAP_USERNAME,
+            settings.IMAP_PASSWORD,
         )
         if status != "OK":
             raise EmailFail("Ошибка подключения к почтовому серверу!")
@@ -74,7 +74,7 @@ def get_payments():
                 if status == "OK":
                     message = email.message_from_bytes(raw_letter[0][1])
                     msg_from = from_subj_decode(message["From"])
-                    if msg_from == settings.imap_from_email.get_secret_value():
+                    if msg_from == settings.IMAP_FROM_EMAIL:
                         data = html_parser(message.get_payload())
                         result.append(data)
     return result

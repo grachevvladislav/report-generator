@@ -6,7 +6,7 @@ from bot.constants.keyboards import (
 )
 from bot.constants.states import States
 from bot.email_receive import get_payments
-from core.models import Employee
+from core.models import Default
 from telegram.ext import CallbackQueryHandler, ConversationHandler
 
 from backend import settings
@@ -30,20 +30,19 @@ async def send_payment(context):
 async def add_pay_notifications(app):
     """Add a job to the queue."""
     job_queue = app.job_queue
-    cashiers = await sync_to_async(Employee.objects.filter)(
-        role=Employee.Role.CASHIR
+    telegram_id = await sync_to_async(Default.get_default)(
+        "cashier_telegram_id"
     )
-    async for cashier in cashiers:
-        jobs = job_queue.get_jobs_by_name(cashier.telegram_id)
-        if jobs:
-            for job in jobs:
-                job.schedule_removal()
-        job_queue.run_repeating(
-            callback=send_payment,
-            interval=int(settings.INTERVAL),
-            chat_id=cashier.telegram_id,
-            first=1,
-        )
+    jobs = job_queue.get_jobs_by_name(telegram_id)
+    if jobs:
+        for job in jobs:
+            job.schedule_removal()
+    job_queue.run_repeating(
+        callback=send_payment,
+        interval=int(settings.INTERVAL),
+        chat_id=telegram_id,
+        first=1,
+    )
 
 
 async def close_check(update, context):

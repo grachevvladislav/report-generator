@@ -105,6 +105,11 @@ TELEGRAM_TOKEN = env.str("TELEGRAM_TOKEN", "")
 CHECK_MAIL = env.str("CHECK_MAIL", False)
 INTERVAL = env.int("INTERVAL", 60)
 
+IMAP_SSL_HOST = env.str("IMAP_SSL_HOST", "")
+IMAP_USERNAME = env.str("IMAP_USERNAME", "")
+IMAP_PASSWORD = env.str("IMAP_PASSWORD", "")
+IMAP_FROM_EMAIL = env.str("IMAP_FROM_EMAIL", "")
+
 SITE_URL = env.str("SITE_URL")
 SITE_NAME = env.str("SITE_NAME")
 SITE_PASSWORD = env.str("SITE_PASSWORD")

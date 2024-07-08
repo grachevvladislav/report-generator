@@ -65,18 +65,20 @@ async def get_schedule(
             date__month=data_range.month, employee=employee
         )
     else:
-        working_days = await sync_to_async(Schedule.objects.filter)(
-            date__month=data_range.month, employee__isnull=False
-        )
+        working_days = await sync_to_async(
+            Schedule.objects.filter(
+                date__month=data_range.month, employee__isnull=False
+            ).order_by
+        )("date")
     previous = None
     async for day in working_days:
         if previous and (
-            await previous.get_employee_name() != await day.get_employee_name()
+            previous.employee_id != day.employee_id
             or append_data(previous.date, days=1) != day.date
         ):
             message += "------------\n"
         previous = day
-        message += day.full_string(full=not employee)
+        message += await sync_to_async(day.full_string)(full=not employee)
         message += "\n"
     if not previous:
         message += "Пока нет расписания на выбранный период"

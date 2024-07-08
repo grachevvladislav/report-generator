@@ -7,20 +7,12 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 class Buttons(enum.Enum):
     """Buttons."""
 
-    YES = "Да"
-    NO = "Нет"
-
     TODAY = "Сегодня (Обновить)"
 
     CHECK_IS_READY = "Чек готов"
     CONFIRMATION = "Подтвердить?"
 
     SCHEDULE = "Расписание"
-    CREATE_REPORT = "Отчёты"
-
-    LOAD_DATA = "Загрузить"
-    MENU = "В меню"
-    CREATE = "Создать"
 
 
 def keyboard_generator(list_of_lines: list[list[list | enum.Enum]]):
@@ -45,8 +37,6 @@ def keyboard_generator(list_of_lines: list[list[list | enum.Enum]]):
         result.append(line_result)
     return InlineKeyboardMarkup(result)
 
-
-confirm_keyboard = keyboard_generator([[Buttons.YES, Buttons.NO]])
 
 start_keyboard = keyboard_generator([[Buttons.TODAY]])
 
