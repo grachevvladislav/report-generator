@@ -24,6 +24,7 @@ django-admin-extra-buttons = "^1.5.7"
 asgiref = "^3.8.1"
 djangorestframework = "^3.15.1"
 django-modeladmin-reorder = "^0.3.1"
+gunicorn = "^22.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

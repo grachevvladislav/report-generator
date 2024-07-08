@@ -32,7 +32,7 @@ services:
       - 5432:5432
 
   bot:
-    build: /app/.
+    build: .
     container_name: report-generator-bot
     depends_on:
       - redis
