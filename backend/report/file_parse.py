@@ -1,7 +1,6 @@
 from datetime import datetime
 
 import pandas as pd
-from asgiref.sync import async_to_sync
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from exceptions import AlreadyExists, ParseFail
 from report.models import Accrual, Sale
@@ -24,7 +23,7 @@ def trainer_report_parsing(file) -> list[Accrual]:
             sum, name, base, person, date = [
                 line[field] for field in trainer_fields
             ]
-            employee = async_to_sync(get_employee_by_name)(person)
+            employee = get_employee_by_name(person)
             line = Accrual(
                 employee=employee,
                 sum=sum,
@@ -60,7 +59,7 @@ def sale_report_parsing(file) -> list[Accrual]:
             sum, person, name, date, client = [
                 line[field] for field in sale_fields
             ]
-            employee = async_to_sync(get_employee_by_name)(person)
+            employee = get_employee_by_name(person)
             line = Sale(
                 employee=employee,
                 sum=sum,

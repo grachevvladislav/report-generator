@@ -12,7 +12,7 @@ from utils import (
     last_day_of_the_previous_month,
 )
 
-from .constants import date_pattern, months
+from constants import date_pattern
 
 
 class Table:
@@ -195,6 +195,8 @@ class SalaryCertificate(models.Model):
         errors = {}
         if self.contract_id is None:
             raise ValidationError(errors)
+        if self.end_date and self.start_date > self.end_date:
+            errors["start_date"] = "Дата начала не может быть позже конца!"
         if self.start_date < self.contract.start_date:
             errors["start_date"] = (
                 f"Не может быть раньше подписания договора \n"
@@ -299,8 +301,7 @@ class SalaryCertificate(models.Model):
 
     def admin_name(self):
         """Name for first field in admin."""
-        date = f"{months[self.start_date.month - 1].lower()} {self.start_date.year}"
-        value = f"#{self.number} от {date}"
+        value = f"#{self.number} от {self.date_of_creation}"
         if self.original_signed:
             return value
         return value + " ❗️"
@@ -308,8 +309,7 @@ class SalaryCertificate(models.Model):
     admin_name.short_description = "Номер"
 
     def __str__(self):
-        date = f"{months[self.start_date.month - 1].lower()} {self.start_date.year}"
-        value = f"#{self.number} от {date} {self.contract.template} {self.contract.employee.full_name}"
+        value = f"#{self.number} от {self.date_of_creation.strftime(date_pattern)} {self.contract.template} {self.contract.employee.full_name}"
         if self.original_signed:
             return value
         return value + " ❗️"

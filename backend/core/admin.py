@@ -1,12 +1,16 @@
+import datetime
+
 from admin_extra_buttons.mixins import ExtraButtonsMixin
 from django.contrib import admin, messages
+from django.db.utils import IntegrityError
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path
-from utils import add_messages, plural_days
+from utils import add_messages, get_last_days_of_the_month
 
 from .crud import get_missing_dates
 from .filters import EmployeeScheduleFilter, ScheduleDateFilter
+from .forms import DateRangeForm
 from .models import BotRequest, Default, Employee, Schedule
 from .views import make_backup
 
@@ -91,24 +95,30 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
     def insert_schedule(self, request):
         """Add schedule button."""
         if request.method == "POST":
-            Schedule.objects.bulk_create(
-                [
-                    Schedule(date=date)
-                    for date in get_missing_dates(add_empty=True)
-                ]
-            )
-            messages.success(request, "Записи добавлены!")
+            form = DateRangeForm(request.POST)
+            if form.is_valid():
+                month = int(form.cleaned_data["month"])
+                year = int(form.cleaned_data["year"])
+                last_day = get_last_days_of_the_month(year=year, month=month)
+                for day in range(1, last_day):
+                    try:
+                        Schedule.objects.create(
+                            date=datetime.date(day=day, month=month, year=year)
+                        )
+                    except IntegrityError:
+                        continue
+                messages.success(request, "Записи добавлены!")
+            else:
+                messages.error(request, "Ошибка валидации формы!")
             return redirect("admin:core_schedule_changelist")
         else:
             context = {
                 **self.admin_site.each_context(request),
                 "title": "Вставить расписание",
-                "text": f"Добавить недостающие записи на {plural_days(Default.get_default('planning_horizon'))}?",
-                "title2": "Создаваемые записи",
-                "objects": get_missing_dates(add_empty=True),
+                "form": DateRangeForm,
                 "opts": self.model._meta,
             }
-            return TemplateResponse(request, "confirm.html", context)
+            return TemplateResponse(request, "confirm_with_form.html", context)
 
     def get_urls(self):
         """Add insert_schedule endpoint."""

@@ -13,8 +13,8 @@ from borb.pdf import (
 from core.models import Employee
 
 from backend.settings import CUSTOM_FONT
+from constants import date_pattern
 
-from .constants import date_pattern
 from .models import SalaryCertificate
 
 

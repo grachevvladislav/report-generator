@@ -258,6 +258,11 @@ class Schedule(models.Model):
         verbose_name = "запись"
         verbose_name_plural = "рабочий график"
 
+        unique_together = (
+            "date",
+            "second_employee",
+        )
+
     date = models.DateField("Дата")
     employee = models.ForeignKey(
         Employee,
@@ -273,6 +278,9 @@ class Schedule(models.Model):
         blank=True,
         null=True,
         default=Default.get_default("work_time"),
+    )
+    second_employee = models.BooleanField(
+        "Второй сотрудник на смене", default=False
     )
 
     def __str__(self):

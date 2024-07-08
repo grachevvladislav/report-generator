@@ -15,4 +15,7 @@ months = [
     "Декабрь",
 ]
 
+months_int = [(i, name) for i, name in zip(range(1, len(months) + 1), months)]
+
+data_button_pattern = "%m.%Y"
 date_pattern = "%d.%m.%Y"
