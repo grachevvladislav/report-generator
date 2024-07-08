@@ -25,7 +25,7 @@ class Default(models.Model):
             MinValueValidator(1),
         ],
     )
-    cashier_telegram_id = models.IntegerField("Telegram id для чеков")
+    cashier_telegram_id = models.CharField("Telegram id для чеков")
 
     def clean(self):
         """Clean data."""
