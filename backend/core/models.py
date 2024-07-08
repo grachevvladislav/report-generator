@@ -29,7 +29,7 @@ class Default(models.Model):
 
     def clean(self):
         """Clean data."""
-        if self.id is None and Default.objects.acount() > 0:
+        if self.id is None and Default.objects.count() > 0:
             raise ValidationError(
                 "Может быть только одна запись с настройками!"
             )
