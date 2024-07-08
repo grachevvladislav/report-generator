@@ -24,8 +24,8 @@ class Command(BaseCommand):
             persistence = PicklePersistence(filepath="local_persistence")
         else:
             redis_instance = Redis(
-                host=settings.redis_host.get_secret_value(),
-                port=settings.redis_port.get_secret_value(),
+                host=settings.REDIS_HOST,
+                port=settings.REDIS_PORT,
                 decode_responses=True,
             )
             persistence = RedisPersistence(redis_instance)
