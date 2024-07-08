@@ -1,4 +1,5 @@
 import calendar
+import datetime
 
 from django.contrib import admin
 from django.db.models.functions import ExtractMonth, ExtractYear
@@ -29,13 +30,32 @@ class ScheduleDateFilter(admin.SimpleListFilter):
             for i in query
         )
 
+    def choices(self, changelist):
+        """Add default choice."""
+        for lookup, title in self.lookup_choices:
+            today = datetime.date.today()
+            yield {
+                "selected": self.value() == str(lookup)
+                or (
+                    self.value() is None
+                    and f"{today.year}-{today.month}" == str(lookup)
+                ),
+                "query_string": changelist.get_query_string(
+                    {self.parameter_name: lookup}, []
+                ),
+                "display": title,
+            }
+
     def queryset(self, request, queryset):
         """Get filtered queryset."""
         if self.value():
             year, month = map(int, self.value().split("-"))
             return queryset.filter(date__year=year, date__month=month)
         else:
-            return queryset
+            today = datetime.date.today()
+            return queryset.filter(
+                date__year=today.year, date__month=today.month
+            )
 
 
 class EmployeeScheduleFilter(admin.SimpleListFilter):

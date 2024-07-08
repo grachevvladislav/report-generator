@@ -85,9 +85,9 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
 
     actions = ("set_default_time",)
     list_editable = ("employee",)
-    ordering = ("-date",)
+    ordering = ("date",)
     list_filter = (ScheduleDateFilter, EmployeeScheduleFilter)
-    list_display = ("full_string", "employee", "time")
+    list_display = ("full_string", "employee", "admin_worktime")
 
     change_list_template = "change_list.html"
     change_form_template = "admin/change_form.html"

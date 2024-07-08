@@ -292,6 +292,12 @@ class Schedule(models.Model):
         else:
             return "☑️"
 
+    def admin_worktime(self):
+        """Hiding default working hours."""
+        if self.time == Default.get_default("work_time"):
+            return "-"
+        return self.time
+
     def get_employee_name(self):
         """Get key name if employee exist."""
         if self.employee:
