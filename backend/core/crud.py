@@ -61,9 +61,11 @@ async def get_schedule(
         f"{now_date.strftime('%d.%m.%Y %H:%M:%S')}\n\n"
     )
     if employee:
-        working_days = await sync_to_async(Schedule.objects.filter)(
-            date__month=data_range.month, employee=employee
-        )
+        working_days = await sync_to_async(
+            Schedule.objects.filter(
+                date__month=data_range.month, employee=employee
+            ).order_by
+        )("date")
     else:
         working_days = await sync_to_async(
             Schedule.objects.filter(

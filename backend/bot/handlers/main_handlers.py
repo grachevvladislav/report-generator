@@ -1,10 +1,12 @@
 import datetime
 
+from asgiref.sync import sync_to_async
 from bot.constants.keyboards import Buttons, start_keyboard
 from bot.constants.states import States
 from bot.handlers.schedule import show_schedule
 from bot.utils import PATTERN, send_or_edit_message
 from core.models import BotRequest, Employee
+from salary.models import HourlyPayment
 from telegram.ext import (
     CallbackQueryHandler,
     CommandHandler,
@@ -36,7 +38,12 @@ async def start(update, context):
         )
         return States.PERMISSION_DENIED
     else:
-        if employee.is_stuff or employee.сontract.template.hourly_payment:
+        has_hourly_payment = sync_to_async(
+            HourlyPayment.objects.filter(
+                contract__сontract__employee=employee.id
+            ).exists
+        )()
+        if employee.is_stuff or await has_hourly_payment:
             return await show_schedule(update, context)
 
 

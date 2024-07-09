@@ -4,11 +4,10 @@ import re
 from bot.constants.keyboards import Buttons, keyboard_generator
 from bot.constants.states import States
 from bot.utils import send_or_edit_message
+from constants import data_button_pattern, months
 from core.crud import get_schedule
 from core.models import Employee
 from dateutil.relativedelta import relativedelta
-
-from constants import data_button_pattern, months
 
 
 async def show_schedule(update, context):
@@ -37,10 +36,8 @@ async def show_schedule(update, context):
     )
     if employee.is_stuff:
         message = await get_schedule(data_range)
-    elif employee.сontract.template.hourly_payment:
-        message = await get_schedule(data_range, employee)
     else:
-        message = "Для вашей роли не доступно расписание."
+        message = await get_schedule(data_range, employee)
     await send_or_edit_message(
         update, message, reply_markup=keyboard_generator(buttons)
     )
