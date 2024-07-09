@@ -123,5 +123,5 @@ SITE_NAME = env.str("SITE_NAME")
 SITE_PASSWORD = env.str("SITE_PASSWORD")
 
 CUSTOM_FONT = TrueTypeFont.true_type_font_from_file(
-    Path("files/Source Serif Pro.ttf")
+    Path("backend/files/Source Serif Pro.ttf")
 )

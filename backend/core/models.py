@@ -169,7 +169,7 @@ class Employee(models.Model):
         null=True,
         help_text="john.smith@example.com",
     )
-    telegram_id = models.IntegerField(
+    telegram_id = models.CharField(
         "Telegram id",
         blank=True,
         null=True,
@@ -325,7 +325,7 @@ class BotRequest(models.Model):
         verbose_name = "запрос"
         verbose_name_plural = "запросы пользователей"
 
-    telegram_id = models.IntegerField("Telegram id", unique=True)
+    telegram_id = models.CharField("Telegram id", unique=True)
     username = models.CharField("username")
     first_name = models.CharField("Имя", blank=True, null=True)
     last_name = models.CharField("Фамилия", blank=True, null=True)
