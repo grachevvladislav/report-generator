@@ -47,7 +47,11 @@ def get_missing_dates(add_empty):
 def export_all_tables():
     buffer = io.StringIO()
     management.call_command(
-        "dumpdata --exclude auth.permission --exclude contenttypes",
+        "dumpdata",
+        "--exclude",
+        "auth.permission",
+        "--exclude",
+        "contenttypes",
         stdout=buffer,
     )
     buffer.seek(0)
