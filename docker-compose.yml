@@ -14,7 +14,7 @@ services:
     expose:
       - 6379
     volumes:
-      - ./redis.conf:/usr/local/etc/redis.conf
+      - ./backend/files/redis.conf:/usr/local/etc/redis.conf
       - redis_volume:/data
       - ../../logs/redis/:/var/log/
 
