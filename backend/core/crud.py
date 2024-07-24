@@ -2,6 +2,7 @@ import datetime
 import io
 
 from asgiref.sync import sync_to_async
+from constants import months
 from django.core import management
 from utils import append_data
 
@@ -63,20 +64,24 @@ async def get_schedule(
 ) -> str:
     now_date = datetime.datetime.now()
     message = (
-        f"Актуальный график на {data_range.strftime('%b %Y')}.\n"
+        f"Актуальный график на {months[data_range.month - 1].lower()} {data_range.strftime('%Y')}г.\n"
         f"Обновлено "
         f"{now_date.strftime('%d.%m.%Y %H:%M:%S')}\n\n"
     )
     if employee:
         working_days = await sync_to_async(
             Schedule.objects.filter(
-                date__month=data_range.month, employee=employee
+                date__month=data_range.month,
+                date__year=data_range.year,
+                employee=employee,
             ).order_by
         )("date")
     else:
         working_days = await sync_to_async(
             Schedule.objects.filter(
-                date__month=data_range.month, employee__isnull=False
+                date__month=data_range.month,
+                date__year=data_range.year,
+                employee__isnull=False,
             ).order_by
         )("date")
     previous = None
