@@ -63,7 +63,7 @@ async def get_schedule(
 ) -> str:
     now_date = datetime.datetime.now()
     message = (
-        f"Актуальный график на {now_date.strftime('%b %Y')}.\n"
+        f"Актуальный график на {data_range.strftime('%b %Y')}.\n"
         f"Обновлено "
         f"{now_date.strftime('%d.%m.%Y %H:%M:%S')}\n\n"
     )

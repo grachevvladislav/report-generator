@@ -6,7 +6,11 @@ from django.db import models
 from django.db.utils import ProgrammingError
 from django.forms.models import model_to_dict
 
-from .validators import exclude_future_dates, passport_series_validator
+from .validators import (
+    exclude_future_dates,
+    passport_series_validator,
+    phone_validater,
+)
 
 
 class Default(models.Model):
@@ -169,6 +173,13 @@ class Employee(models.Model):
         null=True,
         help_text="john.smith@example.com",
     )
+    phone = models.CharField(
+        "Номер телефона",
+        validators=[phone_validater],
+        max_length=13,
+        blank=True,
+        help_text="+7985123456",
+    )
     telegram_id = models.CharField(
         "Telegram id",
         blank=True,
@@ -289,6 +300,8 @@ class Schedule(models.Model):
     def _complete_symbol(self) -> str:
         if datetime.date.today() > self.date:
             return "✅"
+        elif datetime.date.today() == self.date:
+            return "⏳"
         else:
             return "☑️"
 
