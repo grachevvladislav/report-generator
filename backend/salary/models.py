@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal
 
+from constants import date_pattern
 from core.models import Employee, Schedule
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -11,8 +12,6 @@ from utils import (
     first_day_of_the_previous_month,
     last_day_of_the_previous_month,
 )
-
-from constants import date_pattern
 
 
 class Table:
@@ -355,6 +354,8 @@ class SalaryCertificate(models.Model):
             ",", " "
         )
 
+    admin_sum.short_description = "Сумма"
+
     def __str__(self):
         value = (
             f"#{self.number} от "
@@ -374,6 +375,10 @@ class Rate(models.Model):
 
         verbose_name = "ставка"
         verbose_name_plural = "Правило: Ставка"
+        unique_together = (
+            "name",
+            "contract",
+        )
 
     name = models.CharField("Название")
     value = models.FloatField(

@@ -264,7 +264,7 @@ class Schedule(models.Model):
         """Schedule metaclass."""
 
         verbose_name = "запись"
-        verbose_name_plural = "рабочий график"
+        verbose_name_plural = "рабочий график 📆"
 
         unique_together = (
             "date",

@@ -1,5 +1,6 @@
 import datetime
 
+from constants import months
 from core.models import Employee
 from django.contrib import admin, messages
 from django.db.utils import IntegrityError
@@ -8,8 +9,6 @@ from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path
 from utils import last_day_of_the_previous_month
-
-from constants import months
 
 from .crud import create_documents_for_last_month, create_pdf
 from .filters import SalaryCertificateDateFilter
@@ -47,7 +46,11 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
         "date_of_creation",
         "original_signed",
     )
-    list_display = ("admin_name", "contract", "admin_sum")
+    list_display = (
+        "admin_name",
+        "contract",
+        "admin_sum",
+    )
     list_filter = (
         SalaryCertificateDateFilter,
         "contract__template",
