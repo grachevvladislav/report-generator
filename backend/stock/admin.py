@@ -6,7 +6,7 @@ from .models import Delivery, ItemDelivery, ItemWriteOff, Product, WriteOff
 class ProductAdmin(admin.ModelAdmin):
     """ProductAdmin admin site."""
 
-    list_display = ("name", "description", "admin_balance")
+    list_display = ("name", "description", "admin_balance", "enough")
     search_fields = (
         "name",
         "description",

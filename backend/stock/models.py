@@ -20,6 +20,9 @@ class Product(models.Model):
         verbose_name="Описание", blank=True, null=True
     )
     units = models.CharField(verbose_name="Единица измерения", default="шт")
+    minimum_balance = models.IntegerField(
+        verbose_name="Минимальный остаток", default=1
+    )
 
     def balance(self, exclude_id=None):
         """Return current balance."""
@@ -36,6 +39,13 @@ class Product(models.Model):
             or 0
         )
         return delivered - written_off
+
+    def enough(self):
+        """Return enough status."""
+        return self.balance() > self.minimum_balance
+
+    enough.boolean = True
+    enough.short_description = "Достаточно"
 
     def admin_balance(self):
         """Return current balance with units."""
