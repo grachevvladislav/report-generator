@@ -32,6 +32,7 @@ class ScheduleDateFilter(admin.SimpleListFilter):
 
     def choices(self, changelist):
         """Add default choice."""
+        # need to fix
         for lookup, title in self.lookup_choices:
             today = datetime.date.today()
             yield {

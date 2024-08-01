@@ -124,6 +124,7 @@ class SaleAdmin(admin.ModelAdmin):
                 ).data
                 context["objects"] = form.cleaned_data["csv_file"]
             else:
+                # need to fix
                 err = form.errors["csv_file"].as_text()
                 fix_err = err.replace("* [&#x27;", "").replace("&#x27;]", "")
                 add_messages(request, fix_err.split("&#x27;, &#x27;"))

@@ -27,9 +27,9 @@ class Product(models.Model):
     def balance(self, exclude_id=None):
         """Return current balance."""
         delivered = (
-            ItemDelivery.objects.filter(product=self).aggregate(
-                sum=models.Sum("quantity")
-            )["sum"]
+            ItemDelivery.objects.filter(
+                product=self, delivery__is_shipped=True
+            ).aggregate(sum=models.Sum("quantity"))["sum"]
             or 0
         )
         written_off = (
@@ -83,6 +83,7 @@ class Delivery(BaseOrder):
         verbose_name_plural = "поставки ⬆️"
 
     name = models.CharField(max_length=200, verbose_name="Название")
+    is_shipped = models.BooleanField(verbose_name="Отгружена", default=False)
 
     def admin_product_list(self):
         """List of products."""
