@@ -308,11 +308,12 @@ class SalaryCertificate(models.Model):
                 )
                 .values_list("result", flat=True)
             )
+            if query:
+                summ = query[0] * float(percent.percentage_value) / 100
+            else:
+                summ = 0
             table.add_line(
-                full_name=percent.name,
-                count=1,
-                unit="шт.",
-                sum=query[0] * float(percent.percentage_value) / 100,
+                full_name=percent.name, count=1, unit="шт.", sum=summ
             )
         # HourlyPayment
         payment = HourlyPayment.objects.filter(
