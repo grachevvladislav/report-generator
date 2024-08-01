@@ -3,12 +3,11 @@ import datetime
 from constants import months
 from core.models import Employee
 from django.contrib import admin, messages
-from django.db.utils import IntegrityError
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path
-from utils import last_day_of_the_previous_month
+from utils import add_err_messages, last_day_of_the_previous_month
 
 from .crud import create_documents_for_last_month, create_pdf
 from .filters import SalaryCertificateDateFilter
@@ -21,6 +20,7 @@ from .models import (
     Rate,
     SalaryCertificate,
 )
+from .serializers import SalaryCertificateSerializer
 
 
 class ActivitieTypeAdmin(admin.ModelAdmin):
@@ -64,22 +64,27 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
     def create_multiple(self, request):
         """Add certificate."""
         if request.method == "POST":
-            try:
-                # need to add objects from context
-                SalaryCertificate.objects.bulk_create(
-                    create_documents_for_last_month()
-                )
-            except IntegrityError as e:
-                messages.error(request, e)
-            else:
+            data = request.session.get("uploaded_data", [])
+            serializer = SalaryCertificateSerializer(data=data, many=True)
+            if serializer.is_valid():
+                serializer.save()
                 messages.success(request, "Записи добавлены!")
+            else:
+                add_err_messages(
+                    request,
+                    [str(list(er.values())[0][0]) for er in serializer.errors],
+                )
             return redirect("admin:salary_salarycertificate_changelist")
         else:
+            objects = create_documents_for_last_month()
+            request.session["uploaded_data"] = SalaryCertificateSerializer(
+                objects, many=True
+            ).data
             context = {
                 **self.admin_site.each_context(request),
                 "title": "Создать акты за прошлый месяц",
                 "title2": f"Создаваемые записи за {months[last_day_of_the_previous_month().month - 1].lower()}",
-                "objects": create_documents_for_last_month(),
+                "objects": objects,
                 "opts": self.model._meta,
             }
             return TemplateResponse(request, "confirm.html", context)

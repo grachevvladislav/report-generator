@@ -3,7 +3,7 @@ from django.db.models import Sum
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path
-from utils import add_messages
+from utils import add_err_messages
 
 from .filters import (
     DateReportFilter,
@@ -42,7 +42,7 @@ class AccrualAdmin(admin.ModelAdmin):
                     serializer.save()
                     return redirect("admin:report_accrual_changelist")
                 else:
-                    add_messages(
+                    add_err_messages(
                         request,
                         [
                             str(list(er.values())[0][0])
@@ -57,7 +57,7 @@ class AccrualAdmin(admin.ModelAdmin):
             else:
                 err = form.errors["csv_file"].as_text()
                 fix_err = err.replace("* [&#x27;", "").replace("&#x27;]", "")
-                add_messages(request, fix_err.split("&#x27;, &#x27;"))
+                add_err_messages(request, fix_err.split("&#x27;, &#x27;"))
         return TemplateResponse(request, "load_file.html", context)
 
     def get_urls(self):
@@ -116,7 +116,7 @@ class SaleAdmin(admin.ModelAdmin):
                     serializer.save()
                     return redirect("admin:report_sale_changelist")
                 else:
-                    add_messages(
+                    add_err_messages(
                         request,
                         [
                             str(list(er.values())[0][0])
@@ -129,10 +129,9 @@ class SaleAdmin(admin.ModelAdmin):
                 ).data
                 context["objects"] = form.cleaned_data["csv_file"]
             else:
-                # need to fix
                 err = form.errors["csv_file"].as_text()
                 fix_err = err.replace("* [&#x27;", "").replace("&#x27;]", "")
-                add_messages(request, fix_err.split("&#x27;, &#x27;"))
+                add_err_messages(request, fix_err.split("&#x27;, &#x27;"))
         return TemplateResponse(request, "load_file.html", context)
 
     def get_urls(self):

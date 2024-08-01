@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path
 from filters import DateFilter
-from utils import add_messages, get_last_days_of_the_month
+from utils import add_err_messages, get_last_days_of_the_month
 
 from .crud import get_missing_dates
 from .filters import EmployeeScheduleFilter
@@ -153,7 +153,7 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
                 else:
                     text = f"Не назначен сотрудник c {group[0].strftime('%d %B')} по {group[-1].strftime('%d %B')}"
                 msgs.append(text)
-            add_messages(request, msgs)
+            add_err_messages(request, msgs)
         extra_context = extra_context or {}
         extra_context["buttons"] = [
             {"url": "admin:insert_schedule", "name": "Вставить расписание"},

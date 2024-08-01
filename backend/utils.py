@@ -1,13 +1,12 @@
 import datetime
 
 import dateutil
+from constants import months_int
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 
-from constants import months_int
 
-
-def add_messages(request, new_messages):
+def add_err_messages(request, new_messages):
     msg_storage = messages.get_messages(request)
     msg_list = [m.message for m in msg_storage]
     msg_storage.used = False
