@@ -25,7 +25,7 @@ def trainer_report_parsing(file) -> list[Accrual]:
             ]
             employee = get_employee_by_name(person)
             line = Accrual(
-                employee=employee,
+                employee_id=lambda: employee.id if employee else None,
                 sum=sum,
                 name=name,
                 date=datetime.strptime(date, date_format),
@@ -61,18 +61,15 @@ def sale_report_parsing(file) -> list[Accrual]:
             ]
             employee = get_employee_by_name(person)
             line = Sale(
-                employee=employee,
+                employee_id=lambda: employee.id if employee else None,
                 sum=sum,
                 name=name,
                 client=client,
                 date=datetime.strptime(date, date_format),
             )
             line.full_clean()
-        except AlreadyExists:
+        except (AlreadyExists, ValidationError):
             continue
-        except ValidationError as e:
-            for key, value in e.message_dict.items():
-                errors.append(f"{n} строка: {key}: {value[0]}")
         except ObjectDoesNotExist as e:
             errors.append(f"{n} строка: {e}")
         else:

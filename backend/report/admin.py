@@ -45,7 +45,7 @@ class AccrualAdmin(admin.ModelAdmin):
                     add_messages(
                         request,
                         [
-                            str(er["non_field_errors"][0])
+                            str(list(er.values())[0][0])
                             for er in serializer.errors
                         ],
                     )
@@ -118,7 +118,10 @@ class SaleAdmin(admin.ModelAdmin):
                 else:
                     add_messages(
                         request,
-                        [str(er) for er in serializer.errors],
+                        [
+                            str(list(er.values())[0][0])
+                            for er in serializer.errors
+                        ],
                     )
             elif form.is_valid():
                 request.session["uploaded_data"] = SaleSerializer(
