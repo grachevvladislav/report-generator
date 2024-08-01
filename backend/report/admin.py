@@ -1,6 +1,7 @@
 from core.models import Employee
 from django.contrib import admin
 from django.db.models import Q, Sum
+from django.db.utils import IntegrityError
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path
@@ -124,15 +125,21 @@ class SaleAdmin(admin.ModelAdmin):
                 data = request.session.get("uploaded_data", [])
                 serializer = SaleSerializer(data=data, many=True)
                 if serializer.is_valid():
-                    serializer.save()
+                    try:
+                        serializer.save()
+                    except IntegrityError:
+                        add_err_messages(
+                            request,
+                            [
+                                str(list(er.values()))
+                                for er in serializer.errors
+                            ],
+                        )
                     return redirect("admin:report_sale_changelist")
                 else:
                     add_err_messages(
                         request,
-                        [
-                            str(list(er.values())[0][0])
-                            for er in serializer.errors
-                        ],
+                        [str(list(er.values())) for er in serializer.errors],
                     )
             elif form.is_valid():
                 request.session["uploaded_data"] = SaleSerializer(
