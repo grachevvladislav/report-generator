@@ -11,7 +11,7 @@ from .filters import (
     EmployeeAccrualFilter,
     EmployeeSaleFilter,
 )
-from .forms import SaleCsvForm, TrainerCsvForm
+from .forms import AccrualCsvForm, SaleCsvForm
 from .models import Accrual, Sale
 from .serializers import AccrualSerializer, SaleSerializer
 
@@ -32,10 +32,10 @@ class AccrualAdmin(admin.ModelAdmin):
             **self.admin_site.each_context(request),
             "title": "Загрузка файла отчета о проведенных занятиях",
             "opts": self.model._meta,
-            "form": TrainerCsvForm(),
+            "form": AccrualCsvForm(),
         }
         if request.method == "POST":
-            form = TrainerCsvForm(request.POST, request.FILES)
+            form = AccrualCsvForm(request.POST, request.FILES)
             if "db_save" in request.POST:
                 data = request.session.get("uploaded_data", [])
                 serializer = AccrualSerializer(data=data, many=True)

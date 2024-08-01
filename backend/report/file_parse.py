@@ -25,7 +25,7 @@ def trainer_report_parsing(file) -> list[Accrual]:
             ]
             employee = get_employee_by_name(person)
             line = Accrual(
-                employee_id=lambda: employee.id if employee else None,
+                employee=employee,
                 sum=sum,
                 name=name,
                 date=datetime.strptime(date, date_format),
@@ -61,7 +61,7 @@ def sale_report_parsing(file) -> list[Accrual]:
             ]
             employee = get_employee_by_name(person)
             line = Sale(
-                employee_id=lambda: employee.id if employee else None,
+                employee=employee,
                 sum=sum,
                 name=name,
                 client=client,

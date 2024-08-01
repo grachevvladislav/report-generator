@@ -5,7 +5,7 @@ from exceptions import ParseFail
 from report.file_parse import sale_report_parsing, trainer_report_parsing
 
 
-class TrainerCsvForm(forms.Form):
+class AccrualCsvForm(forms.Form):
     """CSV receive form for trainer."""
 
     csv_file = forms.FileField(required=True, label="Выберете файл")

@@ -37,10 +37,10 @@ class Accrual(models.Model):
 
     def __str__(self):
         return " ".join(
-            filter(
-                None,
-                map(
-                    str,
+            map(
+                str,
+                filter(
+                    None,
                     [self.date, self.employee, self.name, self.base, self.sum],
                 ),
             )
@@ -53,7 +53,7 @@ class Accrual(models.Model):
             not self.id
             and Accrual.objects.filter(
                 date=self.date,
-                employee__id=getattr(self.employee, "id", None),
+                employee=self.employee,
                 name=self.name,
                 base=self.base,
                 sum=self.sum,
@@ -102,3 +102,18 @@ class Sale(models.Model):
                 ),
             )
         )
+
+    def clean(self):
+        """Added check for the existence of a similar entry."""
+        super().clean()
+        if (
+            not self.id
+            and Sale.objects.filter(
+                date=self.date,
+                employee=self.employee,
+                name=self.name,
+                sum=self.sum,
+                client=self.client,
+            ).exists()
+        ):
+            raise AlreadyExists("Запись уже существует")
