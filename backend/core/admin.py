@@ -6,10 +6,11 @@ from django.db.utils import IntegrityError
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path
+from filters import DateFilter
 from utils import add_messages, get_last_days_of_the_month
 
 from .crud import get_missing_dates
-from .filters import EmployeeScheduleFilter, ScheduleDateFilter
+from .filters import EmployeeScheduleFilter
 from .forms import DateRangeForm
 from .models import BotRequest, Default, Employee, Schedule
 from .views import make_backup
@@ -86,7 +87,7 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
     actions = ("set_default_time",)
     list_editable = ("employee",)
     ordering = ("date",)
-    list_filter = (ScheduleDateFilter, EmployeeScheduleFilter)
+    list_filter = (DateFilter, EmployeeScheduleFilter)
     list_display = ("full_string", "employee", "admin_worktime")
 
     change_list_template = "change_list.html"

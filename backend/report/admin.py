@@ -1,4 +1,3 @@
-from core.filters import ScheduleDateFilter
 from django.contrib import admin
 from django.db.models import Sum
 from django.shortcuts import redirect
@@ -6,6 +5,11 @@ from django.template.response import TemplateResponse
 from django.urls import path
 from utils import add_messages
 
+from .filters import (
+    DateReportFilter,
+    EmployeeAccrualFilter,
+    EmployeeSaleFilter,
+)
 from .forms import SaleCsvForm, TrainerCsvForm
 from .models import Accrual, Sale
 from .serializers import AccrualSerializer, SaleSerializer
@@ -15,8 +19,7 @@ class AccrualAdmin(admin.ModelAdmin):
     """Accrual model admin site."""
 
     list_display = ("date", "employee", "name", "base", "sum")
-    # need to add "employee" filter
-    list_filter = (ScheduleDateFilter, "employee")
+    list_filter = (DateReportFilter, EmployeeAccrualFilter)
     ordering = ("-date",)
 
     change_list_template = "change_list.html"
@@ -90,8 +93,7 @@ class SaleAdmin(admin.ModelAdmin):
     """Sale model admin site."""
 
     list_display = ("date", "employee", "name", "sum")
-    # need to add employee filter
-    list_filter = (ScheduleDateFilter, "employee")
+    list_filter = (DateReportFilter, EmployeeSaleFilter)
     ordering = ("-date",)
 
     change_list_template = "change_list.html"
