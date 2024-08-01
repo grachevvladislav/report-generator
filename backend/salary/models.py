@@ -241,7 +241,6 @@ class SalaryCertificate(models.Model):
         """Get table data for doc."""
         table = Table()
         # Accrual data
-        # Need to add date filter
         required_fields = AmountOfAccrual.objects.filter(
             contract=self.contract.template
         )
