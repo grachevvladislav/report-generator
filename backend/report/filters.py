@@ -1,8 +1,7 @@
-import datetime
-
 from core.models import Employee
 from django.contrib import admin
 from filters import DateFilter
+from utils import first_day_of_the_previous_month
 
 
 class EmployeeAccrualFilter(admin.SimpleListFilter):
@@ -13,9 +12,13 @@ class EmployeeAccrualFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         """Get list of options."""
-        query = Employee.objects.filter(
-            accrual__isnull=False,
-        ).distinct()
+        query = (
+            Employee.objects.filter(
+                accrual__isnull=False,
+            )
+            .distinct()
+            .order_by("surname")
+        )
         return ((i.id, i.short_name) for i in query)
 
     def queryset(self, request, queryset):
@@ -34,21 +37,23 @@ class EmployeeSaleFilter(EmployeeAccrualFilter):
 
     def lookups(self, request, model_admin):
         """Get list of options."""
-        query = Employee.objects.filter(
-            sale__isnull=False,
-        ).distinct()
+        query = (
+            Employee.objects.filter(
+                sale__isnull=False,
+            )
+            .distinct()
+            .order_by("surname")
+        )
         return ((i.id, i.short_name) for i in query)
 
 
 class DateReportFilter(DateFilter):
     """Group query by month. Default - previous month."""
 
-    pass
-
     def choices(self, changelist):
         """Add default choice."""
         for lookup, title in self.lookup_choices:
-            last_month = datetime.date.today()
+            last_month = first_day_of_the_previous_month()
             yield {
                 "selected": self.value() == str(lookup)
                 or (
@@ -67,8 +72,10 @@ class DateReportFilter(DateFilter):
             year, month = map(int, self.value().split("-"))
             return queryset.filter(date__year=year, date__month=month)
         else:
-            today = datetime.date.today()
+            last_month = first_day_of_the_previous_month()
             return (
-                queryset.filter(date__year=today.year, date__month=today.month)
+                queryset.filter(
+                    date__year=last_month.year, date__month=last_month.month
+                )
                 or queryset
             )

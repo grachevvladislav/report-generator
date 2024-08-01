@@ -121,7 +121,7 @@ class SaleAdmin(admin.ModelAdmin):
                         [str(er) for er in serializer.errors],
                     )
             elif form.is_valid():
-                request.session["uploaded_data"] = AccrualSerializer(
+                request.session["uploaded_data"] = SaleSerializer(
                     form.cleaned_data["csv_file"], many=True
                 ).data
                 context["objects"] = form.cleaned_data["csv_file"]

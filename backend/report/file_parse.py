@@ -60,7 +60,6 @@ def sale_report_parsing(file) -> list[Accrual]:
                 line[field] for field in sale_fields
             ]
             employee = get_employee_by_name(person)
-            # не сохраняется имя клиента
             line = Sale(
                 employee=employee,
                 sum=sum,
