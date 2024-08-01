@@ -16,6 +16,7 @@ class Accrual(models.Model):
     date = models.DateTimeField("Дата начисления")
     employee = models.ForeignKey(
         Employee,
+        verbose_name="сотрудник",
         on_delete=models.CASCADE,
         related_name="accrual",
         blank=True,
@@ -74,6 +75,7 @@ class Sale(models.Model):
     date = models.DateTimeField("Дата оплаты")
     employee = models.ForeignKey(
         Employee,
+        verbose_name="сотрудник",
         on_delete=models.CASCADE,
         related_name="sale",
         blank=True,

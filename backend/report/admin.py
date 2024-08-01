@@ -1,5 +1,6 @@
+from core.models import Employee
 from django.contrib import admin
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path
@@ -88,6 +89,16 @@ class AccrualAdmin(admin.ModelAdmin):
             response.context_data["total"] = total
         return response
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Only trainers can be on the accrual."""
+        if db_field.name == "employee":
+            kwargs["queryset"] = Employee.objects.filter(
+                Q(сontract__template__amount_of_accrual__isnull=False)
+                | Q(is_stuff=True)
+                | Q(is_owner=True)
+            ).distinct()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 class SaleAdmin(admin.ModelAdmin):
     """Sale model admin site."""
@@ -161,6 +172,16 @@ class SaleAdmin(admin.ModelAdmin):
         else:
             response.context_data["total"] = total
         return response
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Only admins can be on the sale."""
+        if db_field.name == "employee":
+            kwargs["queryset"] = Employee.objects.filter(
+                Q(сontract__template__percentage_of_sales__isnull=False)
+                | Q(is_stuff=True)
+                | Q(is_owner=True)
+            ).distinct()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 admin.site.register(Accrual, AccrualAdmin)
