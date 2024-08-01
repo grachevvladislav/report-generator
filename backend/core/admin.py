@@ -28,9 +28,12 @@ class EmployeeAdmin(admin.ModelAdmin):
         "is_active",
         "inn",
         "address",
+        "surname",
+        "name",
+        "patronymic",
     )
     ordering = ("-is_active", "surname", "name", "patronymic")
-    list_filter = ("is_active",)
+    list_filter = ("is_active", "gdpr_is_signed")
 
 
 class BotRequestAdmin(admin.ModelAdmin):
