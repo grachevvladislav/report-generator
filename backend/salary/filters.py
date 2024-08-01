@@ -2,6 +2,7 @@ import calendar
 
 from django.contrib import admin
 from django.db.models.functions import ExtractMonth, ExtractYear
+from utils import first_day_of_the_previous_month
 
 
 class SalaryCertificateDateFilter(admin.SimpleListFilter):
@@ -9,6 +10,22 @@ class SalaryCertificateDateFilter(admin.SimpleListFilter):
 
     title = "Дата"
     parameter_name = "month"
+
+    def choices(self, changelist):
+        """Add default choice."""
+        for lookup, title in self.lookup_choices:
+            last_month = first_day_of_the_previous_month()
+            yield {
+                "selected": self.value() == str(lookup)
+                or (
+                    self.value() is None
+                    and f"{last_month.year}-{last_month.month}" == str(lookup)
+                ),
+                "query_string": changelist.get_query_string(
+                    {self.parameter_name: lookup}, []
+                ),
+                "display": title,
+            }
 
     def lookups(self, request, model_admin):
         """Get list of options."""
@@ -38,4 +55,11 @@ class SalaryCertificateDateFilter(admin.SimpleListFilter):
                 start_date__year=year, start_date__month=month
             )
         else:
-            return queryset
+            last_month = first_day_of_the_previous_month()
+            return (
+                queryset.filter(
+                    start_date__year=last_month.year,
+                    start_date__month=last_month.month,
+                )
+                or queryset
+            )
