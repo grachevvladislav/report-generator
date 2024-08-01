@@ -305,26 +305,29 @@ class Schedule(models.Model):
         else:
             return "☑️"
 
+    def different_time(self):
+        """Worktime or none."""
+        if not self.time == Default.get_default("work_time"):
+            return self.time
+        return None
+
     def admin_worktime(self):
         """Hiding default working hours."""
-        if self.time == Default.get_default("work_time"):
-            return "-"
-        return self.time
+        return self.different_time() or "-"
 
     def full_string(self, full: bool = False) -> str:
         """Return all info in string."""
         if full:
-            return " ".join(
-                [
-                    self._complete_symbol(),
-                    self.date.strftime("%d %B"),
-                    self.employee.short_name,
-                ]
-            )
+            data = [
+                self._complete_symbol(),
+                self.date.strftime("%d %B"),
+                self.employee.short_name,
+            ]
         else:
-            return " ".join(
-                [self._complete_symbol(), self.date.strftime("%d %B")]
-            )
+            data = [self._complete_symbol(), self.date.strftime("%d %B")]
+        if self.different_time():
+            data.extend([str(self.different_time()), "ч."])
+        return " ".join(data)
 
     full_string.short_description = "Дата"
 
