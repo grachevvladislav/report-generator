@@ -234,6 +234,7 @@ class Employee(models.Model):
         """Clean data."""
         if (
             self.id is None
+            and self.id_owner
             and Employee.objects.filter(is_owner=True).count() > 0
         ):
             raise ValidationError("Может быть только один владелец!")
