@@ -232,11 +232,10 @@ class Employee(models.Model):
 
     def clean(self):
         """Clean data."""
-        if (
-            self.id is None
-            and self.is_owner
-            and Employee.objects.filter(is_owner=True).count() > 0
-        ):
+        owner_id = Employee.objects.filter(is_owner=True).values_list(
+            "id", flat=True
+        )
+        if self.is_owner and owner_id and owner_id[0] is not self.id:
             raise ValidationError("Может быть только один владелец!")
         errors = {}
         required_fields = [
@@ -244,10 +243,9 @@ class Employee(models.Model):
             "surname",
             "patronymic",
         ]
-        if self.is_stuff:
-            pass
-        else:
+        if not self.is_stuff:
             required_fields.extend(self.base_required_fields)
+        if not self.is_owner:
             required_fields.extend(
                 self.required_fields_by_tax[self.tax_regime]
             )
