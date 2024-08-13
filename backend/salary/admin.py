@@ -47,7 +47,7 @@ class FieldInLine(admin.TabularInline):
 class SalaryCertificateAdmin(admin.ModelAdmin):
     """SalaryCertificate model admin site."""
 
-    actions = ("download_document", "recalculate_data")
+    actions = ("download_document", "recalculate_data", "lock", "unlock")
     fields = (
         "number",
         "contract",
@@ -125,7 +125,7 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
         ]
         return custom_urls + urls
 
-    @admin.action(description="Скачать документ")
+    @admin.action(description="📥 Скачать документ")
     def download_document(self, request, queryset):
         """Download document."""
         file = create_pdf(queryset)
@@ -136,7 +136,7 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
         ] = f'attachment\x3B filename="{file_name}.pdf"'
         return response
 
-    @admin.action(description="Пересчитать")
+    @admin.action(description="♻️ Пересчитать")
     def recalculate_data(self, request, queryset: list[SalaryCertificate]):
         """Recalculate automatic fields according to the contract rules."""
         for item in queryset:
@@ -145,6 +145,20 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
             except FieldError as e:
                 print(e)
                 messages.error(request, f"{item.__str__()}: {e}")
+
+    @admin.action(description="🔐 Заблокировать")
+    def lock(self, request, queryset: list[SalaryCertificate]):
+        """Lock objects."""
+        for item in queryset:
+            item.is_blocked = True
+            item.save()
+
+    @admin.action(description="🔓 Разблокировать")
+    def unlock(self, request, queryset: list[SalaryCertificate]):
+        """Unlock objects."""
+        for item in queryset:
+            item.is_blocked = False
+            item.save()
 
 
 class ContractAdmin(admin.ModelAdmin):
