@@ -13,7 +13,7 @@ def make_backup(request):
     response = HttpResponse(file, content_type="application/json")
     response["Content-Disposition"] = (
         "attachment; filename=data_"
-        + datetime.today().strftime("%Y-%m-%d_%H:%M:%S")
+        + datetime.today().strftime("%Y_%m_%d_%H_%M_%S")
         + ".json"
     )
     return response
