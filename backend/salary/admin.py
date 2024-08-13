@@ -3,6 +3,7 @@ import datetime
 from constants import months
 from core.models import Employee
 from django.contrib import admin, messages
+from django.core.exceptions import FieldError
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
@@ -15,6 +16,7 @@ from .models import (
     AmountOfAccrual,
     Contract,
     ContractTemplate,
+    Field,
     HourlyPayment,
     PercentageOfSales,
     Rate,
@@ -35,31 +37,42 @@ class ActivitieTypeAdmin(admin.ModelAdmin):
     list_filter = ("salary",)
 
 
+class FieldInLine(admin.TabularInline):
+    """Inline add Field rule for SalaryCertificate edit."""
+
+    model = Field
+    extra = 0
+
+
 class SalaryCertificateAdmin(admin.ModelAdmin):
     """SalaryCertificate model admin site."""
 
-    actions = ("download_document",)
+    actions = ("download_document", "recalculate_data")
     fields = (
         "number",
         "contract",
         ("start_date", "end_date"),
         "date_of_creation",
         "original_signed",
+        "is_blocked",
     )
     list_display = (
         "admin_name",
         "contract",
-        "admin_sum",
+        "get_sum",
     )
     list_filter = (
         SalaryCertificateDateFilter,
         "contract__template",
         "original_signed",
+        "is_blocked",
     )
     ordering = ("-number",)
 
     change_list_template = "change_list.html"
     change_form_template = "admin/change_form.html"
+
+    inlines = (FieldInLine,)
 
     def create_multiple(self, request):
         """Add certificate."""
@@ -122,6 +135,16 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
             "Content-Disposition"
         ] = f'attachment\x3B filename="{file_name}.pdf"'
         return response
+
+    @admin.action(description="Пересчитать")
+    def recalculate_data(self, request, queryset: list[SalaryCertificate]):
+        """Recalculate automatic fields according to the contract rules."""
+        for item in queryset:
+            try:
+                item.calculate()
+            except FieldError as e:
+                print(e)
+                messages.error(request, f"{item.__str__()}: {e}")
 
 
 class ContractAdmin(admin.ModelAdmin):

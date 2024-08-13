@@ -1,6 +1,7 @@
 import io
 
 from borb.pdf import PDF, Document
+from constants import non_employees_list
 from core.models import Employee
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
@@ -9,8 +10,6 @@ from utils import (
     first_day_of_the_previous_month,
     last_day_of_the_previous_month,
 )
-
-from constants import non_employees_list
 
 from .models import (
     Contract,

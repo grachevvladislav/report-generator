@@ -21,7 +21,21 @@ from .models import SalaryCertificate
 def create_list(document: SalaryCertificate, owner: Employee) -> Page:
     page = Page()
     layout = SingleColumnLayout(page)
-    data = document.get_data()
+    document_data = []
+    for counter, field in enumerate(document.get_data()):
+        document_data.append(
+            map(
+                str,
+                [
+                    counter + 1,
+                    field.name,
+                    "{0:.2f}".format(field.count).rstrip("0").rstrip("."),
+                    field.unit,
+                    "{0:.2f}".format(field.price),
+                    "{0:.2f}".format(field.summ()),
+                ],
+            )
+        )
     layout.add(
         FixedColumnWidthTable(number_of_columns=1, number_of_rows=1)
         .add(
@@ -58,8 +72,8 @@ def create_list(document: SalaryCertificate, owner: Employee) -> Page:
     )
     table_data = [
         ["№ п/п", "Наименование услуги", "Кол-во", "Ед.", "Цена", "Сумма"],
-        *data["table"],
-        ["", "", "", "", "Итого:", data["sum"]],
+        *document_data,
+        ["", "", "", "", "Итого:", document.get_sum()],
         ["", "", "", "", "Без налога\n(НДС)", ""],
     ]
     table_separator = len(table_data) - 2
@@ -107,7 +121,7 @@ def create_list(document: SalaryCertificate, owner: Employee) -> Page:
     layout.add(main_table)
     layout.add(
         Paragraph(
-            f"Всего к оказано услуг на сумму {data['sum']}"
+            f"Всего к оказано услуг на сумму {document.get_sum()}"
             f" руб.\n\nВышеперечисленные услуги выполнены полностью и в срок. "
             f"Заказчик претензий по объему, качеству, срокам оказания услуг не"
             f" имеет.",

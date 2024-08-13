@@ -1,7 +1,6 @@
+from constants import months_int
 from django import forms
 from utils import get_current_month, get_current_year, get_years_range
-
-from constants import months_int
 
 
 class DateRangeForm(forms.Form):

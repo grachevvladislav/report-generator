@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from constants import date_pattern
 from core.models import Employee, Schedule
-from django.core.exceptions import ValidationError
+from django.core.exceptions import FieldError, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.functions import Concat
@@ -12,43 +12,6 @@ from utils import (
     first_day_of_the_previous_month,
     last_day_of_the_previous_month,
 )
-
-
-class Table:
-    """Document table."""
-
-    def __init__(self):
-        """Init class."""
-        self.lines = []
-        self.lines_counter = 0
-        self.full_sum = 0
-
-    def add_line(
-        self, full_name: str, count: float | int, unit: str, sum: float | int
-    ):
-        """Add new record in table."""
-        self.full_sum += count * sum
-        self.lines_counter += 1
-        self.lines.append(
-            map(
-                str,
-                [
-                    self.lines_counter,
-                    full_name,
-                    count,
-                    unit,
-                    "{0:.2f}".format(sum),
-                    "{0:.2f}".format(count * sum),
-                ],
-            )
-        )
-
-    def as_dict(self):
-        """Get data for doc creation function."""
-        return {
-            "table": self.lines,
-            "sum": "{0:.2f}".format(self.full_sum),
-        }
 
 
 class ContractTemplate(models.Model):
@@ -181,6 +144,9 @@ class SalaryCertificate(models.Model):
         "Дата создания", default=datetime.datetime.today
     )
     original_signed = models.BooleanField("Оригинал подписан", default=False)
+    is_blocked = models.BooleanField(
+        "Редактирование не доступно", default=False
+    )
     contract = models.ForeignKey(
         Contract,
         on_delete=models.CASCADE,
@@ -231,16 +197,22 @@ class SalaryCertificate(models.Model):
         )
         if end_overlap:
             errors["end_date"] = (
-                f"Следующий акт начался "
+                f"Следующий акт закончился "
                 f"{end_overlap.end_date.strftime(date_pattern)}!"
             )
         if errors:
             raise ValidationError(errors)
 
-    def get_data(self):
-        """Get table data for doc."""
-        table = Table()
-        # Accrual data
+    def calculate(self):
+        """Calculate by template rules."""
+        if self.is_blocked:
+            raise FieldError("Заблокирован от изменений")
+        if self.original_signed:
+            raise FieldError("Оригинал уже подписан")
+        Field.objects.filter(
+            salary_certificate_id=self.id,
+            is_auto=True,
+        ).delete()
         required_fields = AmountOfAccrual.objects.filter(
             contract=self.contract.template
         )
@@ -259,38 +231,41 @@ class SalaryCertificate(models.Model):
                         output_field=models.CharField(),
                     ),
                     count=models.Count("sum"),
-                    result=models.Sum("sum"),
                 )
-                .values("full_name", "count", "sum", "result")
+                .values("full_name", "count", "sum")
             )
             # add check required fields in set
-            compile_required = {
-                (i.required_field, i.value): False for i in required_fields
-            }
+            compile_required = set(
+                ((i.required_field, i.value) for i in required_fields)
+            )
             for line in query:
-                if (line["full_name"], line["sum"]) in compile_required.keys():
-                    compile_required[(line["full_name"], line["sum"])] = True
-                table.add_line(
-                    full_name=line["full_name"],
+                if (line["full_name"], line["sum"]) in compile_required:
+                    compile_required.remove((line["full_name"], line["sum"]))
+                Field.objects.get_or_create(
+                    salary_certificate_id=self.id,
+                    name=line["full_name"],
+                    price=line["sum"],
                     count=line["count"],
-                    unit="шт.",
-                    sum=line["sum"],
+                    is_auto=True,
                 )
-            for field, is_add in compile_required.items():
-                if not is_add:
-                    table.add_line(
-                        full_name=field[0],
-                        count=0,
-                        unit="шт.",
-                        sum=field[1],
-                    )
+            for name, price in compile_required:
+                Field.objects.get_or_create(
+                    salary_certificate_id=self.id,
+                    name=name,
+                    price=price,
+                    is_auto=True,
+                )
         # RATE data
         # NEED TO EDIT
         rates = Rate.objects.filter(contract=self.contract.template)
         if rates:
             for rate in rates:
-                table.add_line(
-                    full_name=rate.name, count=1, unit="шт.", sum=rate.value
+                Field.objects.get_or_create(
+                    salary_certificate_id=self.id,
+                    name=rate.name,
+                    count=1,
+                    price=rate.value,
+                    is_auto=True,
                 )
         # PercentageOfSales date
         percent = PercentageOfSales.objects.filter(
@@ -312,8 +287,12 @@ class SalaryCertificate(models.Model):
                 summ = query[0] * float(percent.percentage_value) / 100
             else:
                 summ = 0
-            table.add_line(
-                full_name=percent.name, count=1, unit="шт.", sum=summ
+            Field.objects.get_or_create(
+                salary_certificate_id=self.id,
+                name=percent.name,
+                count=1,
+                price=summ,
+                is_auto=True,
             )
         # HourlyPayment
         payment = HourlyPayment.objects.filter(
@@ -331,40 +310,85 @@ class SalaryCertificate(models.Model):
                 )
                 .values_list("result", flat=True)
             )
-            table.add_line(
-                full_name=payment.name,
+            Field.objects.get_or_create(
+                salary_certificate_id=self.id,
+                name=payment.name,
                 count=query[0],
-                unit="ч.",
-                sum=payment.value,
+                price=payment.value,
+                is_auto=True,
             )
-        return table.as_dict()
+
+    def get_data(self):
+        """Get table data for doc."""
+        return Field.objects.filter(
+            salary_certificate_id=self.id,
+            is_auto=True,
+        )
+
+    def get_sum(self):
+        """Total amount."""
+        sum = (
+            Field.objects.filter(salary_certificate_id=self.id)
+            .annotate(sum=models.F("price") * models.F("count"))
+            .aggregate(full_sum=models.Sum("sum"))["full_sum"]
+            or 0
+        )
+        return "{0:,.2f} р.".format(Decimal(sum)).replace(",", " ")
+
+    get_sum.short_description = "Сумма"
 
     def admin_name(self):
         """Name for first field in admin."""
         value = f"#{self.number} от {self.date_of_creation}"
-        if self.original_signed:
-            return value
-        return value + " ❗️"
+        if not self.original_signed:
+            value += " ❗️"
+        if not self.is_blocked:
+            value += " 🔓"
+        return value
 
     admin_name.short_description = "Номер"
-
-    def admin_sum(self):
-        """Total amount."""
-        return "{0:,.2f} р.".format(Decimal(self.get_data()["sum"])).replace(
-            ",", " "
-        )
-
-    admin_sum.short_description = "Сумма"
 
     def __str__(self):
         value = (
             f"#{self.number} от "
             f"{self.date_of_creation.strftime(date_pattern)} "
-            f"{self.contract.template} {self.contract.employee.full_name}"
+            f"{self.contract.employee.full_name}"
         )
         if self.original_signed:
             return value
         return value + " ❗️"
+
+
+class Field(models.Model):
+    """Salary certificate table fields."""
+
+    class Meta:
+        """Rate metaclass."""
+
+        verbose_name = "Строка"
+        verbose_name_plural = "Строки"
+        unique_together = ("name", "salary_certificate", "is_auto")
+
+    name = models.CharField(
+        "Название",
+    )
+    price = models.FloatField(
+        "Цена",
+    )
+    count = models.FloatField("Колл-во", default=0)
+    unit = models.CharField("Ед.", default="шт.")
+
+    is_auto = models.BooleanField("Автоматическое поле", default=False)
+    salary_certificate = models.ForeignKey(
+        SalaryCertificate, on_delete=models.CASCADE, related_name="field"
+    )
+
+    def __str__(self):
+        return f"{self.name} {self.price} x {self.count} = {self.summ()}р."
+
+    def summ(self):
+        """Summ."""
+        return self.count * self.price
 
 
 class Rate(models.Model):

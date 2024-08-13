@@ -4,7 +4,3 @@ class AlreadyExists(Exception):
 
 class ParseFail(Exception):
     """ParseFail."""
-
-
-class FileFail(Exception):
-    """ParseFail."""
