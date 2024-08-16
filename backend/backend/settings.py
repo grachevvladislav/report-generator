@@ -109,7 +109,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 locale.setlocale(locale.LC_TIME, "ru_RU.UTF-8")
 
 TELEGRAM_TOKEN = env.str("TELEGRAM_TOKEN", "")
-CHECK_MAIL = env.str("CHECK_MAIL", False)
+CHECK_MAIL = env.bool("CHECK_MAIL", False)
 INTERVAL = env.int("INTERVAL", 60)
 
 IMAP_SSL_HOST = env.str("IMAP_SSL_HOST", "")
