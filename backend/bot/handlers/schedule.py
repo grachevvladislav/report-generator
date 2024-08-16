@@ -34,7 +34,7 @@ async def show_schedule(update, context):
     employee = await Employee.objects.aget(
         telegram_id=update.effective_chat["id"]
     )
-    if employee.is_stuff:
+    if employee.is_stuff or employee.is_owner:
         message = await get_schedule(data_range)
     else:
         message = await get_schedule(data_range, employee)
