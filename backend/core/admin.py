@@ -9,7 +9,7 @@ from django.urls import path
 from filters import DateFilter
 from utils import add_err_messages, get_last_days_of_the_month
 
-from .crud import get_missing_dates
+from .crud import get_schedule_notifications
 from .filters import EmployeeScheduleFilter
 from .forms import DateRangeForm
 from .models import BotRequest, Default, Employee, Schedule
@@ -138,25 +138,8 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
 
     def changelist_view(self, request, extra_context=None):
         """Add notice of deficiencies in next 30 day's planning."""
-        difference = get_missing_dates(add_empty=False)
-        if difference:
-            grouped_dates = []
-            current_group = [difference[0]]
-            for i in range(1, len(difference)):
-                if (difference[i] - difference[i - 1]).days == 1:
-                    current_group.append(difference[i])
-                else:
-                    grouped_dates.append(current_group)
-                    current_group = [difference[i]]
-            grouped_dates.append(current_group)
-            msgs = []
-            for group in grouped_dates:
-                if len(group) == 1:
-                    text = f"Не назначен сотрудник на {group[0].strftime('%d %B')}"
-                else:
-                    text = f"Не назначен сотрудник c {group[0].strftime('%d %B')} по {group[-1].strftime('%d %B')}"
-                msgs.append(text)
-            add_err_messages(request, msgs)
+        msgs = get_schedule_notifications()
+        add_err_messages(request, msgs)
         extra_context = extra_context or {}
         extra_context["buttons"] = [
             {"url": "admin:insert_schedule", "name": "Вставить расписание"},

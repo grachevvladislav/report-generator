@@ -9,42 +9,6 @@ from utils import append_data
 from .models import Default, Employee, Schedule
 
 
-def get_missing_dates(add_empty):
-    start_date = datetime.datetime.now().date()
-    planning_horizon = Default.get_default("planning_horizon")
-    if not planning_horizon:
-        return []
-    if add_empty:
-        db_set = (
-            Schedule.objects.filter(
-                date__range=[
-                    start_date,
-                    append_data(start_date, days=planning_horizon),
-                ],
-            )
-            .values_list("date", flat=True)
-            .distinct()
-        )
-    else:
-        db_set = (
-            Schedule.objects.filter(
-                date__range=[
-                    start_date,
-                    append_data(start_date, days=planning_horizon),
-                ],
-                employee__isnull=False,
-            )
-            .values_list("date", flat=True)
-            .distinct()
-        )
-    all_days = [
-        append_data(start_date, days=date) for date in range(planning_horizon)
-    ]
-    difference = list(set(all_days) - set(db_set))
-    difference.sort()
-    return difference
-
-
 def export_all_tables():
     buffer = io.StringIO()
     management.call_command(
@@ -57,6 +21,49 @@ def export_all_tables():
     )
     buffer.seek(0)
     return buffer
+
+
+def get_schedule_notifications():
+    """Get empty date in schedule."""
+    planning_horizon = Default.get_default("planning_horizon")
+    if not planning_horizon:
+        return []
+    start_date = datetime.datetime.now().date()
+    db_set = (
+        Schedule.objects.filter(
+            date__range=[
+                start_date,
+                append_data(start_date, days=planning_horizon),
+            ],
+            employee__isnull=False,
+        )
+        .values_list("date", flat=True)
+        .distinct()
+    )
+    all_days = [
+        append_data(start_date, days=date) for date in range(planning_horizon)
+    ]
+    difference = list(set(all_days) - set(db_set))
+    difference.sort()
+    if not difference:
+        return []
+    grouped_dates = []
+    current_group = [difference[0]]
+    for i in range(1, len(difference)):
+        if (difference[i] - difference[i - 1]).days == 1:
+            current_group.append(difference[i])
+        else:
+            grouped_dates.append(current_group)
+            current_group = [difference[i]]
+    grouped_dates.append(current_group)
+    msgs = []
+    for group in grouped_dates:
+        if len(group) == 1:
+            text = f"Не назначен сотрудник на {group[0].strftime('%d %B')}"
+        else:
+            text = f"Не назначен сотрудник c {group[0].strftime('%d %B')} по {group[-1].strftime('%d %B')}"
+        msgs.append(text)
+    return msgs
 
 
 async def get_schedule(
@@ -77,6 +84,11 @@ async def get_schedule(
             ).order_by
         )("date")
     else:
+        notifications = [
+            "❗️" + line
+            for line in await sync_to_async(get_schedule_notifications)()
+        ]
+        message += "\n".join(notifications) + "\n\n"
         working_days = await sync_to_async(
             Schedule.objects.filter(
                 date__month=data_range.month,
