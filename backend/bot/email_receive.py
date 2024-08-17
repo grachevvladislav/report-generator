@@ -63,7 +63,6 @@ def get_payments():
             raise EmailFail("Ошибка подключения к почтовому серверу!")
         imap.select("INBOX")
         if settings.TEST_MAIL:
-            print("ntcn")
             _, raw_messages = imap.uid(
                 "search",
                 "SEEN",
@@ -76,7 +75,7 @@ def get_payments():
                 "ALL",
             )
             decoded_messages = raw_messages[0].decode("utf-8").split(" ")
-        if decoded_messages:
+        if decoded_messages[0]:
             for message in decoded_messages:
                 status, raw_letter = imap.uid("fetch", message, "(RFC822)")
                 if status == "OK":
