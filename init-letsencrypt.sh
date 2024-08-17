@@ -7,11 +7,11 @@ else
   exit 1
 fi
 
-domains=("test.test.ru www.test.test.ru")
-email="vladislav.grachev@gmail.com"
+domains=("$MY_NAME www.$MY_NAME")
+email=$MY_EMAIL
 staging=1 # Set to 1 if you're testing your setup to avoid hitting request limits
 
-data_path="./data/certbot" ## need to add volume
+data_path="../data/certbot" ## need to add volume
 rsa_key_size=4096
 regex="([^www.].+)"
 
