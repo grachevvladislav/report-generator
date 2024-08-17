@@ -4,9 +4,9 @@ import enum
 class States(str, enum.Enum):
     """Bot states."""
 
-    PERMISSION_DENIED = "permission_denied"
+    MAIN_MENU = "Меню"
 
-    SCHEDULE = "schedule"
+    SCHEDULE = "Рабочий график 📆"
 
-    WAITING_FOR_PAYMENT = "waiting_for_payment"
-    CONFIRMATION = "confirmation"
+    WAITING_FOR_PAYMENT = "Чек готов"
+    CONFIRMATION = "Подтвердить?"

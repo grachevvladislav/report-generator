@@ -16,9 +16,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = env.str("SECRET_KEY")
 
-ALLOWED_HOSTS = [env.str("MY_NAME")]
+CSRF_TRUSTED_ORIGINS = [
+    "https://" + env.str("MY_NAME"),
+    "http://" + env.str("MY_NAME"),
+]
+ALLOWED_HOSTS = ["*"]
 
-CSRF_TRUSTED_ORIGINS = ALLOWED_HOSTS
 
 INSTALLED_APPS = [
     "core.apps.CoreConfig",
@@ -109,7 +112,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 locale.setlocale(locale.LC_TIME, "ru_RU.UTF-8")
 
 TELEGRAM_TOKEN = env.str("TELEGRAM_TOKEN", "")
-CHECK_MAIL = env.str("CHECK_MAIL", False)
+CHECK_MAIL = env.bool("CHECK_MAIL", False)
+TEST_MAIL = env.bool("TEST_MAIL", False)
 INTERVAL = env.int("INTERVAL", 60)
 
 IMAP_SSL_HOST = env.str("IMAP_SSL_HOST", "")
