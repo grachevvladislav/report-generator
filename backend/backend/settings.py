@@ -16,8 +16,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = env.str("SECRET_KEY")
 
-CSRF_TRUSTED_ORIGINS = ["http://localhost", "http://185.198.152.202"]
-ALLOWED_HOSTS = ["*"]
+CSRF_TRUSTED_ORIGINS = ["http://localhost", "https://" + env.str("MY_NAME")]
+ALLOWED_HOSTS = CSRF_TRUSTED_ORIGINS
 
 
 INSTALLED_APPS = [
