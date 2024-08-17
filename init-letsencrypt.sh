@@ -1,5 +1,12 @@
 #!/bin/bash
 
+if [ -f .env ]; then
+  source .env
+else
+  echo ".env файл не найден!"
+  exit 1
+fi
+
 domains=("test.test.ru www.test.test.ru")
 email="vladislav.grachev@gmail.com"
 staging=1 # Set to 1 if you're testing your setup to avoid hitting request limits
