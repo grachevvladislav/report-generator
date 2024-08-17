@@ -1,51 +1,14 @@
-import datetime
-
-from asgiref.sync import sync_to_async
-from bot.constants.keyboards import Buttons, start_keyboard
+from bot.constants.keyboards import Buttons
 from bot.constants.states import States
 from bot.handlers.schedule import show_schedule
-from bot.utils import PATTERN, send_or_edit_message
-from core.models import BotRequest, Employee
-from salary.models import HourlyPayment
+from bot.utils import PATTERN
 from telegram.ext import (
     CallbackQueryHandler,
     CommandHandler,
     ConversationHandler,
 )
 
-
-async def start(update, context):
-    try:
-        employee = await Employee.objects.aget(
-            telegram_id=update.effective_chat["id"], is_active=True
-        )
-    except Employee.DoesNotExist:
-        try:
-            await BotRequest.objects.aget(telegram_id=update.effective_chat.id)
-        except BotRequest.DoesNotExist:
-            await BotRequest.objects.acreate(
-                telegram_id=update.effective_chat.id,
-                first_name=update.effective_chat.first_name,
-                last_name=update.effective_chat.last_name,
-                username=update.effective_chat.username,
-            )
-        await send_or_edit_message(
-            update,
-            "Доступ пока закрыт, но запрос уже отправлен администратору!\n"
-            "Обновлено "
-            + datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
-            reply_markup=start_keyboard,
-        )
-        return States.PERMISSION_DENIED
-    else:
-        has_hourly_payment = sync_to_async(
-            HourlyPayment.objects.filter(
-                contract__сontract__employee=employee.id
-            ).exists
-        )()
-        if employee.is_stuff or await has_hourly_payment:
-            return await show_schedule(update, context)
-
+from .start import start
 
 start_handler = CommandHandler("start", start)
 
@@ -56,9 +19,12 @@ main_handler = ConversationHandler(
     persistent=True,
     name="main_handler",
     states={
-        States.PERMISSION_DENIED: [
+        States.MAIN_MENU: [
             CallbackQueryHandler(
-                start, pattern=PATTERN.format(Buttons.TODAY.name)
+                start, pattern=PATTERN.format(Buttons.REFRESH.name)
+            ),
+            CallbackQueryHandler(
+                show_schedule, pattern=PATTERN.format(States.SCHEDULE.name)
             ),
         ],
         States.SCHEDULE: [

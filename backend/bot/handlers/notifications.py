@@ -1,11 +1,8 @@
 from asgiref.sync import sync_to_async
-from bot.constants.keyboards import (
-    Buttons,
-    close_check_keyboard,
-    closing_confirmation_keyboard,
-)
+from bot.constants.keyboards import keyboard_generator
 from bot.constants.states import States
 from bot.email_receive import get_payments
+from bot.utils import PATTERN
 from core.models import Default
 from telegram.ext import CallbackQueryHandler, ConversationHandler
 
@@ -22,7 +19,7 @@ async def send_payment(context):
             chat_id=context.job.chat_id,
             text=text,
             disable_notification=True,
-            reply_markup=close_check_keyboard,
+            reply_markup=keyboard_generator([[States.WAITING_FOR_PAYMENT]]),
         )
     return States.WAITING_FOR_PAYMENT.name
 
@@ -58,14 +55,14 @@ async def closing_confirmation(update, context):
     query = update.callback_query
     await query.edit_message_text(
         query.message.text,
-        reply_markup=closing_confirmation_keyboard,
+        reply_markup=keyboard_generator([[States.CONFIRMATION]]),
     )
     return States.CONFIRMATION.name
 
 
 closing_confirmation_handler = CallbackQueryHandler(
     callback=closing_confirmation,
-    pattern="^" + Buttons.CHECK_IS_READY.name + "$",
+    pattern=PATTERN.format(States.WAITING_FOR_PAYMENT.name),
 )
 
 notification_handler = ConversationHandler(
@@ -80,13 +77,13 @@ notification_handler = ConversationHandler(
         States.WAITING_FOR_PAYMENT.name: [
             CallbackQueryHandler(
                 callback=closing_confirmation,
-                pattern="^" + Buttons.CHECK_IS_READY.name + "$",
+                pattern=PATTERN.format(States.WAITING_FOR_PAYMENT.name),
             )
         ],
         States.CONFIRMATION.name: [
             CallbackQueryHandler(
                 callback=close_check,
-                pattern="^" + Buttons.CONFIRMATION.name + "$",
+                pattern=PATTERN.format(States.CONFIRMATION.name),
             )
         ],
     },

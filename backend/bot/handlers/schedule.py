@@ -3,14 +3,21 @@ import re
 
 from bot.constants.keyboards import Buttons, keyboard_generator
 from bot.constants.states import States
+from bot.crud import get_permission
+from bot.handlers.start import start
 from bot.utils import send_or_edit_message
 from constants import data_button_pattern, months
 from core.crud import get_schedule
-from core.models import Employee
 from dateutil.relativedelta import relativedelta
 
 
 async def show_schedule(update, context):
+    permission = await get_permission(update)
+    is_admitted, employee_filter = permission.get(
+        States.SCHEDULE, (False, None)
+    )
+    if not is_admitted:
+        return await start(update, context)
     query = update.callback_query
     now_date = datetime.datetime.today()
     if query and query.data and re.match(r"^[0-9]{2}\.[0-9]{4}$", query.data):
@@ -31,13 +38,7 @@ async def show_schedule(update, context):
         ],
         [[Buttons.TODAY.value, now_date.strftime(data_button_pattern)]],
     ]
-    employee = await Employee.objects.aget(
-        telegram_id=update.effective_chat["id"]
-    )
-    if employee.is_stuff or employee.is_owner:
-        message = await get_schedule(data_range)
-    else:
-        message = await get_schedule(data_range, employee)
+    message = await get_schedule(data_range, employee_filter)
     await send_or_edit_message(
         update, message, reply_markup=keyboard_generator(buttons)
     )
