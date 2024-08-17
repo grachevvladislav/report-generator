@@ -19,7 +19,7 @@ def html_parser(message):
     pay_name = (
         table_in_div.find(string=re.compile("Назначение платежа"))
         .findNext("div")
-        .text.split(": ")
+        .text.rsplit("студия йоги ")
     )
     if len(pay_name) < 2:
         data["Название"] = "Не указано"
@@ -62,13 +62,21 @@ def get_payments():
         if status != "OK":
             raise EmailFail("Ошибка подключения к почтовому серверу!")
         imap.select("INBOX")
-        _, raw_messages = imap.uid(
-            "search",
-            "UNSEEN",
-            "ALL",
-        )
-        decoded_messages = raw_messages[0].decode("utf-8").split(" ")
-        if decoded_messages[0]:
+        if settings.TEST_MAIL:
+            print("ntcn")
+            _, raw_messages = imap.uid(
+                "search",
+                "SEEN",
+            )
+            decoded_messages = raw_messages[0].decode("utf-8").split(" ")[-1:]
+        else:
+            _, raw_messages = imap.uid(
+                "search",
+                "UNSEEN",
+                "ALL",
+            )
+            decoded_messages = raw_messages[0].decode("utf-8").split(" ")
+        if decoded_messages:
             for message in decoded_messages:
                 status, raw_letter = imap.uid("fetch", message, "(RFC822)")
                 if status == "OK":

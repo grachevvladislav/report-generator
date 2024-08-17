@@ -31,6 +31,7 @@ class EmployeeAdmin(admin.ModelAdmin):
         "surname",
         "name",
         "patronymic",
+        "telegram_id",
     )
     ordering = ("-is_active", "surname", "name", "patronymic")
     list_filter = ("is_active", "gdpr_is_signed")

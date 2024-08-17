@@ -38,6 +38,9 @@ class Default(models.Model):
                 "Может быть только одна запись с настройками!"
             )
 
+    def __str__(self):
+        return "Настройки"
+
     @classmethod
     def get_default(cls, key):
         """Get dict of default project settings."""
