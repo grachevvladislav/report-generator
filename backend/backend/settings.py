@@ -4,12 +4,13 @@ from pathlib import Path
 
 import environ
 from borb.pdf.canvas.font.simple_font.true_type_font import TrueTypeFont
-from dotenv import find_dotenv
 
 env = environ.Env()
 
 DEBUG = env.bool("DEBUG", default=True)
 if DEBUG:
+    from dotenv import find_dotenv
+
     environ.Env.read_env(find_dotenv(".env", raise_error_if_not_found=True))
 
 BASE_DIR = Path(__file__).resolve().parent.parent

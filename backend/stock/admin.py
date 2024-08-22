@@ -11,6 +11,7 @@ class ProductAdmin(admin.ModelAdmin):
         "name",
         "description",
     )
+    ordering = ("name",)
 
 
 class ItemDeliveryInLine(admin.TabularInline):

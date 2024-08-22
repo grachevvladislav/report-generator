@@ -22,6 +22,7 @@ def html_parser(message):
         .text.rsplit("студия йоги ")
     )
     if len(pay_name) < 2:
+        # need to fix
         data["Название"] = "Не указано"
     else:
         data["Название"] = pay_name[1]

@@ -55,22 +55,19 @@ services:
       - .env
 
   nginx:
-    image: nginx:1.21.3-alpine
+    image: nginx:1.19-alpine
     container_name: report-generator-nginx
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      #- ./backend/files/default.conf:/etc/nginx/conf.d/default.conf
-      - ./backend/files/templates:/etc/nginx/templates/
+      - ./backend/files/templates:/etc/nginx/templates
       - ../certbot/conf:/etc/letsencrypt
       - ../certbot/www:/var/www/certbot
       - static_value:/var/html/static/
       - media_value:/var/html/media/
-    command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
     depends_on:
       - django
-      - certbot
     env_file:
       - .env
 
