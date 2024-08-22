@@ -68,7 +68,7 @@ sudo ./pull_new_image.sh
 ```
 - Запустить генерацию сертификата;
 ```shell
-sudo ./pull_new_image.sh
+sudo ./init-letsencrypt.sh
 ```
 - Разкомментировать строки обратно;
 ```shell
