@@ -4,11 +4,16 @@ from constants import months
 from core.models import Employee
 from django.contrib import admin, messages
 from django.core.exceptions import FieldError
+from django.db.models import F, Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path
-from utils import add_err_messages, last_day_of_the_previous_month
+from utils import (
+    add_err_messages,
+    format_money,
+    last_day_of_the_previous_month,
+)
 
 from .crud import create_documents_for_last_month, create_pdf
 from .filters import SalaryCertificateDateFilter
@@ -104,14 +109,25 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
 
     def changelist_view(self, request, extra_context=None):
         """Add custom button."""
-        extra_context = extra_context or {}
-        extra_context["buttons"] = [
+        response = super().changelist_view(
+            request, extra_context=extra_context
+        )
+        response.context_data["buttons"] = [
             {
                 "url": "admin:create_multiple",
                 "name": "Создать акты за прошлый месяц",
             },
         ]
-        return super().changelist_view(request, extra_context=extra_context)
+        try:
+            qs = response.context_data["cl"].queryset
+            total = qs.annotate(
+                sum=F("field__price") * F("field__count")
+            ).aggregate(Sum("sum"))["sum__sum"]
+        except (AttributeError, KeyError):
+            pass
+        else:
+            response.context_data["total"] = format_money(total)
+        return response
 
     def get_urls(self):
         """Add insert_schedule endpoint."""
@@ -143,7 +159,6 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
             try:
                 item.calculate()
             except FieldError as e:
-                print(e)
                 messages.error(request, f"{item.__str__()}: {e}")
 
     @admin.action(description="🔐 Заблокировать")

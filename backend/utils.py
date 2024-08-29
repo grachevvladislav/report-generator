@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 
 import dateutil
 from constants import months_int
@@ -61,3 +62,9 @@ def get_last_days_of_the_month(year, month):
         end_date = datetime.date(day=1, month=month + 1, year=year)
     end_date -= datetime.timedelta(days=1)
     return end_date.day
+
+
+def format_money(summ):
+    if not summ:
+        summ = 0
+    return "{0:,.2f} р.".format(Decimal(summ)).replace(",", " ")

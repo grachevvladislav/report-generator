@@ -76,11 +76,10 @@ class AccrualAdmin(admin.ModelAdmin):
 
     def changelist_view(self, request, extra_context=None):
         """Add import csv button."""
-        extra_context = extra_context or {}
-        extra_context["buttons"] = [
+        response = super().changelist_view(request, extra_context)
+        response.context_data["buttons"] = [
             {"url": "admin:import_accrual_csv", "name": "Загрузить CSV"},
         ]
-        response = super().changelist_view(request, extra_context)
         try:
             qs = response.context_data["cl"].queryset
             total = qs.aggregate(Sum("sum"))["sum__sum"]

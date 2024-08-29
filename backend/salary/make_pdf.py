@@ -12,6 +12,7 @@ from borb.pdf import (
 )
 from constants import date_pattern
 from core.models import Employee
+from utils import format_money
 
 from backend.settings import CUSTOM_FONT
 
@@ -29,10 +30,11 @@ def create_list(document: SalaryCertificate, owner: Employee) -> Page:
                 [
                     counter + 1,
                     field.name,
+                    # need to fix
                     "{0:.2f}".format(field.count).rstrip("0").rstrip("."),
                     field.unit,
-                    "{0:.2f}".format(field.price),
-                    "{0:.2f}".format(field.summ()),
+                    format_money(field.price),
+                    format_money(field.summ()),
                 ],
             )
         )

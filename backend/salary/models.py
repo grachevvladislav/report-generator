@@ -10,6 +10,7 @@ from django.db.models.functions import Concat
 from report.models import Accrual, Sale
 from utils import (
     first_day_of_the_previous_month,
+    format_money,
     last_day_of_the_previous_month,
 )
 
@@ -327,13 +328,13 @@ class SalaryCertificate(models.Model):
 
     def get_sum(self):
         """Total amount."""
-        sum = (
+        summ = (
             Field.objects.filter(salary_certificate_id=self.id)
             .annotate(sum=models.F("price") * models.F("count"))
             .aggregate(full_sum=models.Sum("sum"))["full_sum"]
             or 0
         )
-        return "{0:,.2f} р.".format(Decimal(sum)).replace(",", " ")
+        return format_money(summ)
 
     get_sum.short_description = "Сумма"
 
