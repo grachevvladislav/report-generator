@@ -41,7 +41,7 @@ class BotRequestAdmin(admin.ModelAdmin):
     """BotRequest admin site."""
 
     list_display = (
-        "full_name",
+        "__str__",
         "username",
         "telegram_id",
     )
@@ -92,7 +92,7 @@ class ScheduleAdmin(ExtraButtonsMixin, admin.ModelAdmin):
     list_editable = ("employee",)
     ordering = ("date",)
     list_filter = (DateFilter, EmployeeScheduleFilter)
-    list_display = ("full_string", "employee", "admin_worktime")
+    list_display = ("__str__", "employee", "admin_worktime")
 
     change_list_template = "change_list.html"
     change_form_template = "admin/change_form.html"

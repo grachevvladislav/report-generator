@@ -101,7 +101,7 @@ class Contract(models.Model):
 
     def admin_name(self):
         """Admin site display name."""
-        value = f"#{self.number} {self.employee.full_name} {self.template}"
+        value = f"#{self.number} {self.employee.full_name()} {self.template}"
         if not self.is_active:
             return value + " ⛔"
         if self.original_signed:
@@ -353,11 +353,12 @@ class SalaryCertificate(models.Model):
         value = (
             f"#{self.number} от "
             f"{self.date_of_creation.strftime(date_pattern)} "
-            f"{self.contract.employee.full_name}"
+            f"{self.contract.employee.full_name()}"
         )
-        if self.original_signed:
-            return value
-        return value + " ❗️"
+        if not self.original_signed:
+            value += " ❗️"
+        value += f" {self.get_sum()}"
+        return value
 
 
 class Field(models.Model):

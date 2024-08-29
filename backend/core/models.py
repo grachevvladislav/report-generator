@@ -199,7 +199,7 @@ class Employee(models.Model):
         """Get complete information to create a document."""
         if self.tax_regime == self.TaxRegime.CZ:
             return (
-                f"{self.tax_regime} {self.full_name}, ИНН: {self.inn}, "
+                f"{self.tax_regime} {self.full_name()}, ИНН: {self.inn}, "
                 f"{self.address}, р/с {self.checking_account}, "
                 f"{self.bank}, БИК: {self.bik}, к/с "
                 f"{self.correspondent_account}"
@@ -213,12 +213,13 @@ class Employee(models.Model):
                 f"{self.correspondent_account}"
             )
 
-    @property
     def full_name(self):
         """Full name."""
         return " ".join(
             filter(None, [self.surname, self.name, self.patronymic])
         )
+
+    full_name.short_description = "ФИО"
 
     @property
     def key_name(self) -> str:
@@ -231,7 +232,7 @@ class Employee(models.Model):
         return f"{self.surname} {self.name[0]}.{self.patronymic[0]}."
 
     def __str__(self):
-        return self.full_name
+        return self.full_name()
 
     def clean(self):
         """Clean data."""
@@ -317,7 +318,7 @@ class Schedule(models.Model):
         """Hiding default working hours."""
         return self.different_time() or "-"
 
-    def full_string(self, full: bool = False) -> str:
+    def full_string_bot(self, full: bool = False) -> str:
         """Return all info in string."""
         if full:
             data = [
@@ -331,7 +332,7 @@ class Schedule(models.Model):
             data.extend([str(self.different_time()), "ч."])
         return " ".join(data)
 
-    full_string.short_description = "Дата"
+    full_string_bot.short_description = "Дата"
 
 
 class BotRequest(models.Model):
@@ -356,14 +357,9 @@ class BotRequest(models.Model):
         default=None,
     )
 
-    @property
-    def full_name(self):
+    def __str__(self):
         """Contact first name and last name."""
         return f"{self.first_name or " - "} {self.last_name or " - "}"
-
-    def __str__(self):
-        """Str method."""
-        return self.full_name
 
     def save(self, *args, **kwargs):
         """Add telegram id to employee instance and remove request."""
