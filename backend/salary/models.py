@@ -90,14 +90,14 @@ class Contract(models.Model):
             errors["start_date"] = "Дата начала не может быть позже конца!"
             raise ValidationError(errors)
 
-    @property
     def is_active(self):
-        """Current status of the contract."""
+        """Return current status of the contract."""
         if self.end_date:
             return datetime.date.today() <= self.end_date
         return True
 
-    is_active.fget.boolean = True
+    is_active.boolean = True
+    is_active.short_description = "Действует"
 
     def admin_name(self):
         """Admin site display name."""
