@@ -112,6 +112,8 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
         response = super().changelist_view(
             request, extra_context=extra_context
         )
+        if not isinstance(response, TemplateResponse):
+            return response
         response.context_data["buttons"] = [
             {
                 "url": "admin:create_multiple",

@@ -66,7 +66,10 @@ class BaseOrder(models.Model):
         abstract = True
 
     date = models.DateTimeField(
-        "Дата создания", default=datetime.datetime.today, unique=True
+        "Дата создания",
+        default=datetime.datetime.today,
+        unique=True,
+        validators=(MinValueValidator(0),),
     )
 
     def __str__(self):
