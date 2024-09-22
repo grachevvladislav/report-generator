@@ -129,7 +129,6 @@ class BaseItem(models.Model):
         Product,
         on_delete=models.CASCADE,
         related_name="%(class)s_item",
-        default=None,
         verbose_name="товар",
     )
     quantity = models.IntegerField(
@@ -192,7 +191,7 @@ class ItemWriteOff(BaseItem):
 
     def clean(self):
         """Clean data."""
-        if self.quantity > self.product.balance(self.id):
+        if self.product_id and self.quantity > self.product.balance(self.id):
             raise ValidationError(
                 f"Нельзя списать больше {self.product.admin_balance()}!"
             )
