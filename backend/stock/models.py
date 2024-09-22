@@ -69,7 +69,6 @@ class BaseOrder(models.Model):
         "Дата создания",
         default=datetime.datetime.today,
         unique=True,
-        validators=(MinValueValidator(0),),
     )
 
     def __str__(self):
@@ -85,7 +84,6 @@ class Delivery(BaseOrder):
         verbose_name = "поставка"
         verbose_name_plural = "поставки ⬆️"
 
-    name = models.CharField(max_length=200, verbose_name="Название")
     is_shipped = models.BooleanField(verbose_name="Отгружена", default=False)
 
     def admin_product_list(self):
@@ -134,6 +132,10 @@ class BaseItem(models.Model):
         default=None,
         verbose_name="товар",
     )
+    quantity = models.IntegerField(
+        verbose_name="Количество",
+        validators=(MinValueValidator(0),),
+    )
 
     def __str__(self):
         return " ".join(
@@ -158,9 +160,6 @@ class ItemDelivery(BaseItem):
             "product",
         )
 
-    quantity = models.IntegerField(
-        verbose_name="Количество", validators=(MinValueValidator(0),)
-    )
     delivery = models.ForeignKey(
         Delivery,
         on_delete=models.CASCADE,
@@ -183,9 +182,6 @@ class ItemWriteOff(BaseItem):
             "product",
         )
 
-    quantity = models.IntegerField(
-        verbose_name="Количество",
-    )
     write_off = models.ForeignKey(
         WriteOff,
         on_delete=models.CASCADE,

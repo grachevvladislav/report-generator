@@ -24,8 +24,7 @@ class ItemDeliveryInLine(admin.TabularInline):
 class DeliveryAdmin(admin.ModelAdmin):
     """DeliveryAdmin admin site."""
 
-    list_display = ("name", "date", "admin_product_list", "is_shipped")
-    search_fields = ("name",)
+    list_display = ("date", "admin_product_list", "is_shipped")
     inlines = (ItemDeliveryInLine,)
 
 
