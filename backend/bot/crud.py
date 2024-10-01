@@ -24,13 +24,13 @@ async def get_employee(update):
     return employee
 
 
-async def has_schedule_permission(employee):
+async def has_schedule_permission(employee: Employee):
     """
     Check user permission for schedule.
 
     :return: (is_admitted, employee_filter)
     """
-    if employee.is_stuff or employee.is_owner:
+    if employee.is_stuff or employee.is_manager or employee.is_owner:
         return True, None
     has_hourly_payment = sync_to_async(
         HourlyPayment.objects.filter(

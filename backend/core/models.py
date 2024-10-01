@@ -192,6 +192,7 @@ class Employee(models.Model):
     )
     gdpr_is_signed = models.BooleanField("Обработка ПД", default=False)
     is_active = models.BooleanField("Сотрудник активен", default=True)
+    is_manager = models.BooleanField("Права управляющего", default=False)
     is_stuff = models.BooleanField("Права суперпользователя", default=False)
     is_owner = models.BooleanField("Владелец", default=False)
 
