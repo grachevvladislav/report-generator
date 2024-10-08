@@ -323,7 +323,6 @@ class SalaryCertificate(models.Model):
         """Get table data for doc."""
         return Field.objects.filter(
             salary_certificate_id=self.id,
-            is_auto=True,
         )
 
     def get_sum(self):
