@@ -10,13 +10,17 @@ async def send_or_edit_message(update, *args, **kwargs) -> None:
     if update.message:
         await update.message.reply_text(*args, **kwargs)
         logger.info(
-            f'Sent message to {update.effective_chat["id"]}: {str(args)} {str(kwargs)}'
+            f'Sent message to {update.effective_chat["id"]}: '
+            f"{str(args)} {str(kwargs)}"
         )
     else:
         try:
             logger.info(
-                f'New message to {update.effective_chat["id"]}: {str(args)} {str(kwargs)}'
+                f'Changed message for {update.effective_chat["id"]}: '
+                f"{str(args)} {str(kwargs)}"
             )
             await query.edit_message_text(*args, **kwargs)
         except BadRequest:
-            pass
+            logger.info(
+                f'Changed message for {update.effective_chat["id"]}: BadRequest err'
+            )
