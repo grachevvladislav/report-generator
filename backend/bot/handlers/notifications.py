@@ -23,7 +23,7 @@ async def send_payment(context):
             disable_notification=True,
             reply_markup=keyboard_generator([[States.WAITING_FOR_PAYMENT]]),
         )
-    logger.info("TG message sent")
+        logger.info("TG message sent")
     return States.WAITING_FOR_PAYMENT.name
 
 
