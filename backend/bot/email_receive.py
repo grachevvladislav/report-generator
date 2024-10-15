@@ -7,6 +7,7 @@ from bot.constants.exceptions import EmailFail
 from bs4 import BeautifulSoup
 
 from backend import settings
+from backend.settings import logger
 
 
 def html_parser(message):
@@ -16,16 +17,11 @@ def html_parser(message):
     table_in_div = body.find(
         attrs={"style": "border-top: 1px solid #e2e8ef; padding: 20px 0 0"}
     )
-    pay_name = (
+    data["Название"] = (
         table_in_div.find(string=re.compile("Назначение платежа"))
         .findNext("div")
-        .text.rsplit("студия йоги ")
+        .text
     )
-    if len(pay_name) < 2:
-        # need to fix
-        data["Название"] = "Не указано"
-    else:
-        data["Название"] = pay_name[1]
     data["Дата"] = (
         table_in_div.find(string=re.compile("Дата платежа")).findNext("p").text
     )
@@ -82,7 +78,15 @@ def get_payments():
                 if status == "OK":
                     message = email.message_from_bytes(raw_letter[0][1])
                     msg_from = from_subj_decode(message["From"])
-                    if msg_from == settings.IMAP_FROM_EMAIL:
+                    if settings.IMAP_FROM_EMAIL in msg_from:
                         data = html_parser(message.get_payload())
                         result.append(data)
+                        for i in range(9999999999999999):
+                            logger.info(
+                                "The message was successfully processed"
+                            )
+                    else:
+                        logger.info(
+                            f"New unknown mail. target: {settings.IMAP_FROM_EMAIL}, current{msg_from}"
+                        )
     return result

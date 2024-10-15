@@ -36,6 +36,8 @@ services:
       - redis
       - db
     restart: always
+    volumes:
+      - logs_value:/app/logs/
     entrypoint: python /app/manage.py bot
     env_file:
       - .env
@@ -50,6 +52,7 @@ services:
     volumes:
       - static_value:/app/static/
       - media_value:/app/media/
+      - logs_value:/app/logs/
     entrypoint: gunicorn backend.wsgi --bind 0.0.0.0:8000
     env_file:
       - .env
@@ -87,3 +90,9 @@ volumes:
   media_value:
   redis_volume:
   postgres_data:
+  logs_value:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs

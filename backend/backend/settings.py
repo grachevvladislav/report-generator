@@ -1,4 +1,5 @@
 import locale
+import logging
 import os
 from pathlib import Path
 
@@ -95,6 +96,38 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default_formatter": {
+            "format": "%(asctime)s - [%(levelname)s] - %(filename)s - %(message)s",
+            "datefmt": "%d.%m.%Y %H:%M:%S",
+        }
+    },
+    "handlers": {
+        "stream_handler": {
+            "class": "logging.StreamHandler",
+            "formatter": "default_formatter",
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "default_formatter",
+            "filename": BASE_DIR / "logs" / "bot.log",
+            "maxBytes": 10**6,
+            "backupCount": 5,
+        },
+    },
+    "loggers": {
+        "main": {
+            "handlers": ["stream_handler", "file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+    },
+}
+
+logger = logging.getLogger("main")
 
 LANGUAGE_CODE = "ru"
 

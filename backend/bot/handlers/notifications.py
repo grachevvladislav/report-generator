@@ -7,11 +7,13 @@ from core.models import Default
 from telegram.ext import CallbackQueryHandler, ConversationHandler
 
 from backend import settings
+from backend.settings import logger
 
 
 async def send_payment(context):
     """Send every payment as message."""
-    for data in get_payments():
+    payments = await sync_to_async(get_payments)()
+    for data in payments:
         text = "Новая онлайн оплата!\n\n"
         for key, value in data.items():
             text += key + ": " + value + "\n"
@@ -21,6 +23,7 @@ async def send_payment(context):
             disable_notification=True,
             reply_markup=keyboard_generator([[States.WAITING_FOR_PAYMENT]]),
         )
+    logger.info("TG message sent")
     return States.WAITING_FOR_PAYMENT.name
 
 
