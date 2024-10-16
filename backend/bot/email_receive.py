@@ -81,10 +81,7 @@ def get_payments():
                     if settings.IMAP_FROM_EMAIL in msg_from:
                         data = html_parser(message.get_payload())
                         result.append(data)
-                        for i in range(9999999999999999):
-                            logger.info(
-                                "The message was successfully processed"
-                            )
+                        logger.info("The message was successfully processed")
                     else:
                         logger.info(
                             f"New unknown mail. target: {settings.IMAP_FROM_EMAIL}, current{msg_from}"
