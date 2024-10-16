@@ -161,3 +161,4 @@ cython_debug/
 
 inspired-alcove.json
 /local_persistence
+logs/
