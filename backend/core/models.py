@@ -207,7 +207,7 @@ class Employee(models.Model):
             )
         if self.tax_regime == self.TaxRegime.IP:
             return (
-                f"{self.tax_regime} {self.full_name}, ОГРНИП: {self.ogrnip}, "
+                f"{self.tax_regime} {self.full_name()}, ОГРНИП: {self.ogrnip}, "
                 f"ИНН: {self.inn}, "
                 f"{self.address}, р/с {self.checking_account}, "
                 f"{self.bank}, БИК: {self.bik}, к/с "
