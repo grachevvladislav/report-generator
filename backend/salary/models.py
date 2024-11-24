@@ -145,6 +145,7 @@ class SalaryCertificate(models.Model):
         "Дата создания", default=datetime.datetime.today
     )
     original_signed = models.BooleanField("Оригинал подписан", default=False)
+    have_receipt = models.BooleanField("Есть чек", default=False)
     is_blocked = models.BooleanField(
         "Редактирование не доступно", default=False
     )

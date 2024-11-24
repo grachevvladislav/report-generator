@@ -59,6 +59,7 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
         ("start_date", "end_date"),
         "date_of_creation",
         "original_signed",
+        "have_receipt",
         "is_blocked",
     )
     list_display = (
@@ -70,6 +71,7 @@ class SalaryCertificateAdmin(admin.ModelAdmin):
         SalaryCertificateDateFilter,
         "contract__template",
         "original_signed",
+        "have_receipt",
         "is_blocked",
     )
     ordering = ("-number",)
